@@ -3,8 +3,20 @@ Base Model for data parsing and representation.
 """
 
 
-class Model:
+from collections.abc import Mapping
+from typing import Literal
+from abc import ABC
+
+
+
+type HeaderLevel = Literal["title", "H1", "H2", "H3", "H4", "p"]
+
+class Model(ABC):
+    """ Abstract base class for models """
+ 
     raw: str
+
+    FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]
 
 
 class Table:
@@ -31,7 +43,7 @@ class Section:
 
     title: str
     content: str | None
-    table: Table | None
+    table: list[Table]
 
     subsections: list["Section"]
 
