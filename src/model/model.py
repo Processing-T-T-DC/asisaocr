@@ -8,8 +8,17 @@ from typing import Literal
 from abc import ABC
 
 
-
 type HeaderLevel = Literal["title", "H1", "H2", "H3", "H4", "p"]
+
+class WritableFile:
+    class WritableParameters:
+        pass
+
+    class WritableEntry:
+        content: str
+        parameters: "WritableFile.WritableParameters"
+
+    entries: list[WritableEntry]
 
 class Model(ABC):
     """ Abstract base class for models """
@@ -18,6 +27,14 @@ class Model(ABC):
 
     FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]
 
+
+    def create_writable_file(self, writable_file: WritableFile):
+
+        writable_file = WritableFile()
+
+        writable_file.entries = []
+
+        return writable_file
 
 class Table:
     headers: list[str]
@@ -55,16 +72,3 @@ class ParsedFile:
 
     raw: str
 
-
-
-
-class WritableFile:
-    class WritableParameters:
-        pass
-
-    class WritableEntry:
-        content: str
-        parameters: "WritableFile.WritableParameters"
-
-
-    entries: list[WritableEntry]
