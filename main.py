@@ -2,13 +2,15 @@
 
 from src.errors import FileReadError
 from src.model.models.AARR_model import AARR_Model
+from src.model.parsers.excel_model_parser import ExcelModelParser
+from src.model.parsers.html_model_parser import HTMLModelParser
 from src.model.parsers.pdf_model_parser import PDFModelParser
 from src.model.readers.file_model_reader import FileReader
 
 
 if __name__ == "__main__":
     reader = FileReader()
-    reader.set_target("INFORME AARR -EVALUACIÓN OBJETIVA.pdf")
+    reader.set_target("eprivacy.ecix.tech.html")
     # reader.set_target("RAT_HOSPITAL UNIVERSITARIO HLA MONCLOA.pdf")
     data = reader.read()
 
@@ -17,7 +19,8 @@ if __name__ == "__main__":
         exit(1)
 
 
-    parser = PDFModelParser(AARR_Model.FONT_SIZES_MAPPING)
+    # parser = PDFModelParser(AARR_Model.FONT_SIZES_MAPPING)
+    parser = HTMLModelParser()
     parsed_file = parser.parse(data)
 
 

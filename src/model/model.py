@@ -54,3 +54,17 @@ class ParsedFile:
     sections: list[Section]
 
     raw: str
+
+
+
+
+class WritableFile:
+    class WritableParameters:
+        pass
+
+    class WritableEntry:
+        content: str
+        parameters: "WritableFile.WritableParameters"
+
+
+    entries: list[WritableEntry]
