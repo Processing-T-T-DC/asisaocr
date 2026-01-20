@@ -4,37 +4,35 @@ Base Model for data parsing and representation.
 
 
 from collections.abc import Mapping
-from typing import Literal
-from abc import ABC
+from typing import Generic, Literal, TypeVar
+from abc import ABC, abstractmethod
+
+from src.errors import Error, ParsingError
 
 
 type HeaderLevel = Literal["title", "H1", "H2", "H3", "H4", "p"]
 
-class WritableFile:
-    class WritableParameters:
-        pass
+class WritableParameters:
+    pass
 
-    class WritableEntry:
-        content: str
-        parameters: "WritableFile.WritableParameters"
+class WritableContent:
+    pass
 
-    entries: list[WritableEntry]
+class WritingTarget:
+    pass
 
-class Model(ABC):
-    """ Abstract base class for models """
- 
-    raw: str
+class WritableEntry[P: WritableParameters, C: WritableContent]:
+    content: C
+    parameters: P
 
-    FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]
+class WritableFile[T: WritableFile, E: WritableEntry](ABC):
+    target: T
+    entries: list[E]
 
-
-    def create_writable_file(self, writable_file: WritableFile):
-
-        writable_file = WritableFile()
-
-        writable_file.entries = []
-
-        return writable_file
+    @abstractmethod
+    def __init__(self, target: T, entries: list[E]):
+        self.target = target
+        self.entries = entries
 
 class Table:
     headers: list[str]
@@ -64,11 +62,52 @@ class Section:
 
     subsections: list["Section"]
 
-
-
 class ParsedFile:
     title: str
     sections: list[Section]
 
     raw: str
+
+class Model(ABC):
+    """ Abstract base class for models """
+ 
+    raw: str
+
+    FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]
+
+    @abstractmethod
+    def create_writable_file(self, parsed_file: ParsedFile) -> WritableFile:
+        pass
+
+
+class Writer[TARGET: WritingTarget, WRITABLE_FILE: WritableFile](ABC):
+
+    def set_target(self, value: TARGET):
+        self.target = value
+    
+    @abstractmethod
+    def write(self, writable_file: WRITABLE_FILE) -> None | Error:
+        pass
+
+class ParseResult:
+
+    file: ParsedFile | WritableFile
+    
+    model: Model | None
+    writer: Writer | None 
+    """It can be None, because we might know what writer to use after parsing if the model already processed it (WritableFile is returned), 
+    but it can also be unknown until the model processes it.
+    This way, we can skip processing the data into a ParsedFile if the known writing format is already the same as the parsing one.
+    """
+
+    def __init__(self, file, model: Model | None = None, writer: Writer | None = None):
+        self.file = file
+        self.model = model
+        self.writer = writer
+
+class Parser(ABC):
+    
+    @abstractmethod
+    def parse(self, data: bytes) -> ParseResult | ParsingError:
+        pass
 

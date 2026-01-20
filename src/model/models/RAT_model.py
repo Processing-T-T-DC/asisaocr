@@ -14,12 +14,13 @@ class RAT_Model(Model):
 
     def create_excel_writable_file(self, parsed_file: ParsedFile) -> WritableFile:
         """Create a writable file from the parsed file."""
-        writable_file = ExcelWriter.WritableExcelFile()
-        writable_file.entries = []
-        for section in parsed_file.sections:
-            entry = ExcelWriter.WritableExcelFile.WritableEntry()
-            entry.content = section.content if section.content else ""
-            # entry.parameters = {}
-            writable_file.entries.append(entry)
+        entries = []
+        target = ""
+        writable_file = ExcelWriter.WritableExcelFile(target, entries)
+        # for section in parsed_file.sections:
+        #     entry = ExcelWriter.WritableExcelFile.WritableExcelEntry()
+        #     entry.content = section.content if section.content else ""
+        #     # entry.parameters = {}
+        #     writable_file.entries.append(entry)
         return writable_file
 

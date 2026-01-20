@@ -1,9 +1,9 @@
 from io import BytesIO
-from src.errors import Error
-from src.model.model import ParsedFile, Section
+from src.errors import Error, ParsingError
+from src.model.model import ParseResult, ParsedFile, Parser, Section
 from bs4 import BeautifulSoup
 
-class HTMLModelParser:
+class HTMLModelParser(Parser):
 
 
     def _parse_main_title(self, soup: BeautifulSoup) -> str:
@@ -22,16 +22,22 @@ class HTMLModelParser:
         return sections
         
 
-    def parse(self, data: bytes) -> ParsedFile | Error:
+    def parse(self, data: bytes) -> ParseResult | ParsingError:
         """Parse the excel data and return a ParsedFile or an Error."""
 
         soup: BeautifulSoup = BeautifulSoup(data, 'html.parser')
 
-        
 
         parsed_file = ParsedFile()
 
         parsed_file.title = self._parse_main_title(soup)
         parsed_file.sections = self._parse_sections(soup)
 
-        return parsed_file
+        
+        
+        
+        
+        
+        result = ParseResult(parsed_file)
+
+        return result

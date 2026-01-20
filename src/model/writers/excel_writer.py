@@ -1,29 +1,47 @@
-from src.model.model import WritableFile
+from typing import TypeVar
+from src.model.model import Model, WritableEntry, WritableFile, WritableParameters, Writer, WritingTarget
 import openpyxl
+from openpyxl.cell import Cell
+from src.errors import Error, FileWriteError
 
-class ExcelWriter:
+
+class ExcelWriter(Writer):
 
     class WritableExcelFile(WritableFile):
 
-        class WritableExcelParameters(WritableFile.WritableParameters):
-            excel_specific_param: str = "default_value"
+        class WritableExcelParameters(WritableParameters):
+            cell: Cell
 
-        class WritableEntry(WritableFile.WritableEntry):
-            # content: str
-            # parameters: "ExcelWriter.WritableExcelFile.WritableExcelParameters"
-            pass
+        class WritableExcelEntry(WritableEntry):
+            content: Cell
+            parameters: "ExcelWriter.WritableExcelFile.WritableExcelParameters"
 
-        # entries: list[WritableEntry]
+            def __init__(self, content: Cell, parameters: "ExcelWriter.WritableExcelFile.WritableExcelParameters"):
+                self.content = content
+                self.parameters = parameters
 
+        entries: list[WritableExcelEntry] = []
 
-    def write(self, parsed_file: WritableExcelFile) -> bytes:
+        def __init__(self, target: str, entries: list[WritableExcelEntry]):
+            self.entries = entries
+            self.target = target
+
+    def write(self, writable_file: WritableExcelFile) -> None | Error:
         """Write the parsed file to excel format and return as bytes."""
         # Dummy implementation for demonstration
 
         workbook = openpyxl.Workbook()
         sheet = workbook.active
 
-        # for entry in parsed_file.entries:
-        #     sheet.append([entry.content])
+        if sheet is None:
+            raise FileWriteError("Sheet is empty right after creation.")
+        
+        for entry in writable_file.entries:
+            cell = entry.content
+            sheet[cell.coordinate] = cell.value
+        
 
-        return b"Excel data"
+        if self.target is None:
+            raise FileWriteError("Writing target is None.")
+            
+        workbook.save(self.target)
