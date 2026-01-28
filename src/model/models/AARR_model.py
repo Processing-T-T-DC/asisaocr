@@ -1,6 +1,8 @@
 
+from typing import cast
 from src.model.model import Model, ParsedFile
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell import Cell
 
 from src.model.writers.excel_writer import ExcelWriter
@@ -79,37 +81,41 @@ class AARR_Model(Model):
         "evidencias_otra_informacion_relevante": "Evidencias de otro tipo de información relevante adicional",
     }
 
-    data: tuple[Cell]
+    entries: list[ExcelWriter.WritableExcelFile.WritableExcelEntry] = []
     target: str | None
+
+    def _get_text_from_cell_or_empty_string(self, cell: Cell) -> str:
+        return cast(str, cell.value)
 
     def process(self, workbook: Workbook, target: str):
         self.grab_first_row_of_data(workbook)
         self.target = target
 
-    def grab_first_row_of_data(self, workbook: Workbook) -> tuple[Cell]:
+    def grab_first_row_of_data(self, workbook: Workbook):
         sheet = workbook["Evaluacion objetiva"]
         try:
             cells = sheet["A4:BH4"][0]
             cells: tuple[Cell] = cells
-            self.data = cells
 
-            return cells
+            for cell in cells:
+                params = ExcelWriter.WritableExcelFile.WritableExcelParameters(cell.row, cell.column)
+                self.entries.append(ExcelWriter.WritableExcelFile.WritableExcelEntry(self._get_text_from_cell_or_empty_string(cell), params))
 
         except IndexError as e:
             raise e
 
     def create_writable_file(self, parsed_file: ParsedFile) -> ExcelWriter.WritableExcelFile:
         
-        entries = []
+        # entries = []
 
-        for cell in self.data:
-            parameters = ExcelWriter.WritableExcelFile.WritableExcelParameters()
-            entry = ExcelWriter.WritableExcelFile.WritableExcelEntry(cell, parameters)
-            entries.append(entry)
+        # for cell in self.entries:
+        #     parameters = ExcelWriter.WritableExcelFile.WritableExcelParameters(ce)
+        #     entry = ExcelWriter.WritableExcelFile.WritableExcelEntry(cell, parameters)
+        #     entries.append(entry)
 
         assert self.target is not None
 
-        file = ExcelWriter.WritableExcelFile(self.target, entries)
+        file = ExcelWriter.WritableExcelFile(self.target, self.entries)
         
         return file
         

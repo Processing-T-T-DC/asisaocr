@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
 
     for file_name in get_all_file_paths_in_dir("input"):
-        print("name: ", file_name)
+        print(file_name)
         reader.set_target(file_name)
         result = reader.read()
 
@@ -34,6 +34,6 @@ if __name__ == "__main__":
             assert isinstance(parse_result.file, WritableFile)
             
             parse_result.writer.set_target(parse_result.file.target)
-            parse_result.writer.write(parse_result.file)
+            parse_result.writer.write(parse_result.file, parse_result.template)
             
 

@@ -1,6 +1,6 @@
 
 from pathlib import Path
-from src.errors import FileReadError
+from src.errors import FileReadError, InvalidFileError
 from src.model.model import Parser
 from src.model.parsers.excel_model_parser import ExcelModelParser
 from src.model.parsers.html_model_parser import HTMLModelParser
@@ -22,10 +22,14 @@ class FileReader:
         try:
             # Simulate reading and parsing logic
 
-            extension = Path(self.target).suffix.lower()
+            file = Path(self.target)
+            extension = file.suffix.lower()
             parser: Parser
 
             if extension in {".xls", ".xlsx", ".xlsm", ".xlsb"}:
+                if file.name.startswith("~$"):
+                    return FileReadError(message="WARNING: This is an excel lock file. Skipping.")
+                
                 parser = ExcelModelParser()
             elif extension == ".pdf":
                 parser = PDFModelParser({})

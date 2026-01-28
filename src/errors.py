@@ -19,6 +19,12 @@ class FileReadError(Error):
         self.message = message
         super().__init__(self.message)
 
+
+class InvalidFileError(Error):
+    """Exception raised for invalid files at reading time."""
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
 class FileWriteError(Error):
     """Exception raised for errors in writing files."""
 

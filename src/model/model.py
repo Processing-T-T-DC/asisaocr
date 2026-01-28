@@ -86,7 +86,7 @@ class Writer[TARGET: WritingTarget, WRITABLE_FILE: WritableFile](ABC):
         self.target = value
     
     @abstractmethod
-    def write(self, writable_file: WRITABLE_FILE) -> None | Error:
+    def write(self, writable_file: WRITABLE_FILE, template: str | None = None) -> None | Error:
         pass
 
 class ParseResult:
@@ -100,10 +100,13 @@ class ParseResult:
     This way, we can skip processing the data into a ParsedFile if the known writing format is already the same as the parsing one.
     """
 
-    def __init__(self, file, model: Model | None = None, writer: Writer | None = None):
+    template: str | None
+
+    def __init__(self, file, model: Model | None = None, writer: Writer | None = None, template: str | None = None):
         self.file = file
         self.model = model
         self.writer = writer
+        self.template = template
 
 class Parser(ABC):
     
