@@ -12,6 +12,7 @@ import openpyxl
 
 
 type ColumnKey = Literal[
+    "tratamiento",
     "responsable_del_tratamiento",
     "data_owner",
     "data_owner_externo",
@@ -143,6 +144,7 @@ class RAT_Model(Model):
     }
 
     output_mapping: dict[ColumnKey, str] = {
+        "tratamiento": "B",
         "responsable_del_tratamiento": "E",
         "data_owner": "C",
         "data_owner_externo": "",
@@ -213,6 +215,7 @@ class RAT_Model(Model):
 
     class Finalidad:
         nombre: ExcelWriter.WritableExcelFile.WritableExcelEntry
+        tratamiento: ExcelWriter.WritableExcelFile.WritableExcelEntry
         
         nombre_del_destinatario: ExcelWriter.WritableExcelFile.WritableExcelEntry
         funcion_del_destinatario: ExcelWriter.WritableExcelFile.WritableExcelEntry
@@ -367,130 +370,130 @@ class RAT_Model(Model):
         return ExcelWriter.WritableExcelFile.WritableExcelEntry(self._get_text_from_cell_or_empty_string(self._current_sheet, cell.coordinate), params)
 
     def process(self, workbook: Workbook, target: str):
-        
-        sheet = workbook.worksheets[0]
-        self._current_sheet = sheet
-
-        self.responsables = RAT_Model.Responsables()    
-
-        self.responsables.responsable_del_tratamiento = self._get_entry_from_cell(sheet["A5"])
-        self.responsables.data_owner = self._get_entry_from_cell(sheet["B5"])
-        self.responsables.data_owner_externo = self._get_entry_from_cell(sheet["C5"])
-        self.responsables.delegado_de_proteccion_de_datos = self._get_entry_from_cell(sheet["D5"]) 
-        self.responsables.delegado_de_proteccion_de_datos_externo = self._get_entry_from_cell(sheet["E5"])
-        self.responsables.otras_figuras_o_responsables = self._get_entry_from_cell(sheet["F5"])
-        self.responsables.figura_en_que_se_actua_respecto_al_tratamiento = self._get_entry_from_cell(sheet["G5"])
-
         self.finalidades = []
+        
+        for sheet in workbook.worksheets:
+            self._current_sheet = sheet
 
-        # find most immediate row below the finalidad field
-        is_last_entry = False
+            self.responsables = RAT_Model.Responsables()    
 
-        current_row = 11
-        while not is_last_entry:
-            starting_row = current_row
-            for current_row in range(starting_row, sheet.max_row + 1):
-                if sheet[f"A{current_row}"].value is not None:
+            self.responsables.responsable_del_tratamiento = self._get_entry_from_cell(sheet["A5"])
+            self.responsables.data_owner = self._get_entry_from_cell(sheet["B5"])
+            self.responsables.data_owner_externo = self._get_entry_from_cell(sheet["C5"])
+            self.responsables.delegado_de_proteccion_de_datos = self._get_entry_from_cell(sheet["D5"]) 
+            self.responsables.delegado_de_proteccion_de_datos_externo = self._get_entry_from_cell(sheet["E5"])
+            self.responsables.otras_figuras_o_responsables = self._get_entry_from_cell(sheet["F5"])
+            self.responsables.figura_en_que_se_actua_respecto_al_tratamiento = self._get_entry_from_cell(sheet["G5"])
+
+
+            # find most immediate row below the finalidad field
+            is_last_entry = False
+
+            current_row = 11
+            while not is_last_entry:
+                starting_row = current_row
+                for current_row in range(starting_row, sheet.max_row + 1):
+                    if sheet[f"A{current_row}"].value is not None:
+                        break
+
+                if current_row >= sheet.max_row:
+                    is_last_entry = True
+                
+                current_cell: Cell = sheet[f"A{current_row}"]
+                self._current_cell = current_cell
+                
+                if current_cell.fill.bgColor.rgb == 'FF40A04C': # This is the greem color headers like "Finalidades no gestionadas" have
                     break
 
-            if current_row >= sheet.max_row:
-                is_last_entry = True
-            
-            current_cell: Cell = sheet[f"A{current_row}"]
-            self._current_cell = current_cell
-            
-            if current_cell.fill.bgColor.rgb == 'FF40A04C': # This is the greem color headers like "Finalidades no gestionadas" have
-                break
-
-            finalidad_height = self._get_height_of_finalidad(sheet, current_row)
+                finalidad_height = self._get_height_of_finalidad(sheet, current_row)
 
 
-            
-            finalidad = RAT_Model.Finalidad()
-            finalidad.nombre = self._get_entry_from_cell(sheet[f"{self._current_cell.column_letter}{current_row}"])
-            finalidad.nombre_del_destinatario = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.funcion_del_destinatario = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-
-            finalidad.encargo_de_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.observaciones_de_encargo_de_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.resumen_de_politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.observaciones_de_politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-
-            # For some reason there are 7 columns that are always empty, and correspond to Finalidad. Let's skip them as 
-            # that info was already obtained in the top side of the file 
-            self._current_cell = self._current_cell.offset(0, 7)
-
-            # finalidad.responsable_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.data_owner = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.data_owner_externo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.delegado_de_proteccion_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.delegado_de_proteccion_de_datos_externo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.otras_figuras_o_responsables = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            # finalidad.figura_en_que_se_actua_respecto_al_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-
-            finalidad.sistema_de_informacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.resumen_medidas_de_seguridad = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_colectivos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            if (len(finalidad.datos_colectivos) > 0):
-                column = finalidad.datos_colectivos[0].parameters.column
                 
-                finalidad.se_tratan_datos_colectivos = ExcelWriter.WritableExcelFile.WritableExcelEntry("SI", ExcelWriter.WritableExcelFile.WritableExcelParameters(current_row, column))
-            else:
-                finalidad.se_tratan_datos_colectivos = ExcelWriter.WritableExcelFile.WritableExcelEntry("NO", ExcelWriter.WritableExcelFile.WritableExcelParameters(current_row, self._current_cell.column))
+                finalidad = RAT_Model.Finalidad()
+                finalidad.tratamiento = self._get_entry_from_cell(sheet["A3"])
+                finalidad.tratamiento.content = finalidad.tratamiento.content.removeprefix("Responsable del tratamiento: ")
+                finalidad.nombre = self._get_entry_from_cell(sheet[f"{self._current_cell.column_letter}{current_row}"])
+                finalidad.nombre_del_destinatario = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.funcion_del_destinatario = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+
+                finalidad.encargo_de_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.observaciones_de_encargo_de_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.resumen_de_politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.observaciones_de_politicas_de_conservacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+
+                # For some reason there are 7 columns that are always empty, and correspond to Finalidad. Let's skip them as 
+                # that info was already obtained in the top side of the file 
+                self._current_cell = self._current_cell.offset(0, 7)
+
+                # finalidad.responsable_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.data_owner = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.data_owner_externo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.delegado_de_proteccion_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.delegado_de_proteccion_de_datos_externo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.otras_figuras_o_responsables = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                # finalidad.figura_en_que_se_actua_respecto_al_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+
+                finalidad.sistema_de_informacion = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.resumen_medidas_de_seguridad = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_colectivos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                if (len(finalidad.datos_colectivos) > 0):
+                    column = finalidad.datos_colectivos[0].parameters.column
+                    
+                    finalidad.se_tratan_datos_colectivos = ExcelWriter.WritableExcelFile.WritableExcelEntry("SI", ExcelWriter.WritableExcelFile.WritableExcelParameters(current_row, column))
+                else:
+                    finalidad.se_tratan_datos_colectivos = ExcelWriter.WritableExcelFile.WritableExcelEntry("NO", ExcelWriter.WritableExcelFile.WritableExcelParameters(current_row, self._current_cell.column))
+                
+                # finalidad.se_tratan_datos_identificativos = sheet[f"{self._get_next_column()}{current_row}"]
+                # finalidad.datos_de_caracter_identificativo = self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, "T", finalidad_height)
+
+                finalidad.se_tratan_datos_identificativos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_de_caracter_identificativo = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_datos_sensibles_o_especialmente_protegidos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_especialmente_protegidos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                finalidad.otros_datos_especialmente_protegidos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                
+                finalidad.se_tratan_datos_comision_de_infracciones_penales_o_administrativas = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_comision_de_infracciones_penales_o_administrativas = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                
+                finalidad.se_tratan_datos_de_caracteristicas_personales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_de_caracteristicas_personales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_datos_de_circunstancias_sociales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.circunstancias_sociales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                
+                finalidad.se_tratan_datos_academicos_y_profesionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_academicos_y_profesionales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+                
+                finalidad.se_tratan_datos_de_detalle_de_empleo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_de_detalle_de_empleo = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_datos_de_informacion_comercial = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.informacion_comercial = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_datos_sobre_transacciones_de_bienes_y_servicios = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.transacciones_de_bienes_y_servicios = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_datos_economicos_financieros_y_de_seguros = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.datos_economicos_financieros_y_de_seguros = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.se_tratan_otras_categorias_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.otras_categoria_de_datos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
+
+                finalidad.base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.ley_aplicable_o_mision_base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.descripcion_base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+
+                finalidad.identificacion_de_transferencia = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.resumen_de_transferencias_internacionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.categorias_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+                finalidad.garantias_de_transferencias_internacionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
+
+                self.finalidades.append(finalidad)
+
+                current_row += 1
             
-            # finalidad.se_tratan_datos_identificativos = sheet[f"{self._get_next_column()}{current_row}"]
-            # finalidad.datos_de_caracter_identificativo = self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, "T", finalidad_height)
-
-            finalidad.se_tratan_datos_identificativos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_de_caracter_identificativo = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_datos_sensibles_o_especialmente_protegidos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_especialmente_protegidos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            finalidad.otros_datos_especialmente_protegidos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            
-            finalidad.se_tratan_datos_comision_de_infracciones_penales_o_administrativas = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_comision_de_infracciones_penales_o_administrativas = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            
-            finalidad.se_tratan_datos_de_caracteristicas_personales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_de_caracteristicas_personales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_datos_de_circunstancias_sociales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.circunstancias_sociales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            
-            finalidad.se_tratan_datos_academicos_y_profesionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_academicos_y_profesionales = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-            
-            finalidad.se_tratan_datos_de_detalle_de_empleo = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_de_detalle_de_empleo = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_datos_de_informacion_comercial = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.informacion_comercial = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_datos_sobre_transacciones_de_bienes_y_servicios = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.transacciones_de_bienes_y_servicios = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_datos_economicos_financieros_y_de_seguros = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.datos_economicos_financieros_y_de_seguros = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.se_tratan_otras_categorias_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.otras_categoria_de_datos = [self._get_entry_from_cell(cell) for cell in self._get_list_of_vertically_aligned_rows_with_data(sheet, current_row, self._get_next_column(), finalidad_height, "cell")]
-
-            finalidad.base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.ley_aplicable_o_mision_base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.descripcion_base_legitimadora_del_tratamiento = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-
-            finalidad.identificacion_de_transferencia = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.resumen_de_transferencias_internacionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.categorias_de_datos = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-            finalidad.garantias_de_transferencias_internacionales = self._get_entry_from_cell(sheet[f"{self._get_next_column()}{current_row}"])
-
-            self.finalidades.append(finalidad)
-
-            current_row += 1
-        
-
-        # self.data = (Cell(sheet, ))        
         
         self.target = target
 
