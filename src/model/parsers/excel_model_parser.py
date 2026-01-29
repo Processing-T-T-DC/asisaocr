@@ -57,14 +57,13 @@ class ExcelModelParser(Parser):
         template: str | None = None
 
         if sheet.title == "Evaluacion objetiva":
-            name = "REPLACE_WITH_NAME"
             model = AARR_Model()
-            model.process(workbook,  f"output/{name}_evaluacion_objetiva.xlsx")
+            model.process(workbook,  "output/evaluaciones_objetivas_master.xlsx")
+            template = "templates/AARR_Modelo de datos_template.xlsx"
             writable_file = model.create_writable_file(ParsedFile())
             writer = ExcelWriter()
         
-        elif sheet.title.startswith("ADMINISTRACIÓN"):
-            name = "REPLACE_WITH_NAME"
+        elif sheet["A1"].value == "Informe RAT":
             model = RAT_Model()
             model.process(workbook, "output/RAT_master.xlsx")
             template = "templates/RAT_Modelo de datos_template.xlsx"

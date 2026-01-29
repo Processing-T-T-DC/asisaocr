@@ -1,3 +1,4 @@
+import os
 from src.model.model import Model, WritableEntry, WritableFile, WritableParameters, Writer, WritingTarget
 import openpyxl
 from openpyxl.cell import Cell
@@ -35,8 +36,16 @@ class ExcelWriter(Writer):
         """Write the parsed file to excel format and return as bytes."""
         # Dummy implementation for demonstration
 
-        if template is not None:            
-            workbook = openpyxl.load_workbook(template)
+        if template is not None:
+
+            if template == "templates/RAT_Modelo de datos_template.xlsx" and "RAT_master.xlsx" in os.listdir("output/"):
+                workbook = openpyxl.load_workbook("output/RAT_master.xlsx")
+            
+            elif template == "templates/AARR_Modelo de datos_template.xlsx" and  "evaluaciones_objetivas_master.xlsx" in os.listdir("output/"):
+                workbook = openpyxl.load_workbook("output/evaluaciones_objetivas_master.xlsx")
+            
+            else:
+                workbook = openpyxl.load_workbook(template)
         else:
             workbook = openpyxl.Workbook()
         
@@ -45,7 +54,7 @@ class ExcelWriter(Writer):
         if sheet is None:
             raise FileWriteError("Sheet is empty right after creation.")
         
-        if template == "templates/RAT_Modelo de datos_template.xlsx":
+        if template == "templates/RAT_Modelo de datos_template.xlsx" or template == "templates/AARR_Modelo de datos_template.xlsx":
             # check last filled row
             col = 2  # A = 1, B = 2, etc.
             last_row: int
