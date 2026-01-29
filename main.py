@@ -1,10 +1,8 @@
 
 
-from typing import cast
 from src.errors import FileReadError, ParsingError
 from src.model.model import WritableFile
 from src.model.readers.file_model_reader import FileReader
-from src.model.writers.excel_writer import ExcelWriter
 from src.utils import get_all_file_paths_in_dir
 
 if __name__ == "__main__":
