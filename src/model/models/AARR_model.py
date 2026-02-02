@@ -203,12 +203,12 @@ class AARR_Model(Model):
         "preven_efectos_colaterales_interesados": "BC",
         "especificacion_preven_efectos_colaterales_interesados": "BD",
         "es_riesgo_alto": "",
-        "justificacion_riesgo_escaso_PIA": "",
-        "evidencias_relativas_resultado": "",
-        "justificacion_riesgo_alto_PIA": "",
-        "evidencias_relativas_riesgo_alto": "",
-        "otra_informacion_relevante": "",
-        "evidencias_otra_informacion_relevante": "",
+        "justificacion_riesgo_escaso_PIA": "BE",
+        "evidencias_relativas_resultado": "BF",
+        "justificacion_riesgo_alto_PIA": "BG",
+        "evidencias_relativas_riesgo_alto": "BH",
+        "otra_informacion_relevante": "BI",
+        "evidencias_otra_informacion_relevante": "BK",
     }
 
     output_row_start = 4
