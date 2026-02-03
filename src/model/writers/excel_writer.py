@@ -44,6 +44,8 @@ class ExcelWriter(Writer):
             elif template == "templates/AARR_Modelo de datos_template.xlsx" and  "evaluaciones_objetivas_master.xlsx" in os.listdir("output/"):
                 workbook = openpyxl.load_workbook("output/evaluaciones_objetivas_master.xlsx")
             
+            elif template == "templates/PIA_Modelo de datos_template.xlsx" and  "pia_master.xlsx" in os.listdir("output/"):
+                workbook = openpyxl.load_workbook("output/pia_master.xlsx")
             else:
                 workbook = openpyxl.load_workbook(template)
         else:
@@ -54,7 +56,7 @@ class ExcelWriter(Writer):
         if sheet is None:
             raise FileWriteError("Sheet is empty right after creation.")
         
-        if template == "templates/RAT_Modelo de datos_template.xlsx" or template == "templates/AARR_Modelo de datos_template.xlsx":
+        if template == "templates/RAT_Modelo de datos_template.xlsx" or template == "templates/AARR_Modelo de datos_template.xlsx" or template == "templates/PIA_Modelo de datos_template.xlsx":
             # check last filled row
             col = 2  # A = 1, B = 2, etc.
             last_row: int
