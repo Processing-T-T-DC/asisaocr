@@ -108,9 +108,17 @@ class ParseResult:
         self.writer = writer
         self.template = template
 
+class File:
+    data: bytes
+    filename: str
+
+    def __init__(self, data: bytes, filename: str):
+        self.data = data
+        self.filename = filename
+
 class Parser(ABC):
     
     @abstractmethod
-    def parse(self, data: bytes) -> ParseResult | ParsingError:
+    def parse(self, file: File) -> ParseResult | ParsingError:
         pass
 

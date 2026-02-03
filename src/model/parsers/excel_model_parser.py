@@ -3,7 +3,7 @@ from io import BytesIO
 from typing import Any, TypedDict, cast
 import pdfplumber
 from src.errors import Error, ParsingError
-from src.model.model import HeaderLevel, Model, ParseResult, ParsedFile, Parser, Section, WritableFile, Writer
+from src.model.model import File, HeaderLevel, Model, ParseResult, ParsedFile, Parser, Section, WritableFile, Writer
 import re
 import openpyxl
 from openpyxl import Workbook
@@ -42,10 +42,10 @@ class ExcelModelParser(Parser):
         return sections
         
 
-    def parse(self, data: bytes) -> ParseResult | ParsingError:
+    def parse(self, file: File) -> ParseResult | ParsingError:
         """Parse the excel data and return a ParsedFile or an Error."""
         
-        workbook = openpyxl.load_workbook(filename=BytesIO(data))
+        workbook = openpyxl.load_workbook(BytesIO(file.data))
         sheet = workbook.worksheets[0]
 
         if sheet is None:
