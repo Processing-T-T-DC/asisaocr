@@ -84,9 +84,9 @@ def procesar_un_html(html_content, nombre_archivo):
         "2.1 preparar y realizar": 11,
         "datos son recopilados": 12,
         "orígenes de datos": 13,
-        "cómo se tratan los datos?": 14,
+        "¿cómo se tratarán los datos?": 14,
         "sistemas en los que se tratarán": 15,
-        "política de conservación": 16,
+        "existe una política de conservación y eliminación de datos": 16,
         "implicaciones del uso de información": 18,
         # PREGUNTAS QUE TIENEN JUSTIFICACIÓN ASOCIADA
         "alcanzar la finalidad perseguida": 19,
