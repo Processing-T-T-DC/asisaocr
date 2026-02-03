@@ -1,9 +1,12 @@
 from io import BytesIO
-from src.errors import Error
-from src.model.model import ParsedFile, Section
+from src.errors import Error, ParsingError
+from src.model.model import File, Model, ParseResult, ParsedFile, Parser, Section, WritableFile, Writer
 from bs4 import BeautifulSoup
 
-class HTMLModelParser:
+from src.model.models.PIA_model import PIA_Model
+from src.model.writers.excel_writer import ExcelWriter
+
+class HTMLModelParser(Parser):
 
 
     def _parse_main_title(self, soup: BeautifulSoup) -> str:
@@ -22,16 +25,42 @@ class HTMLModelParser:
         return sections
         
 
-    def parse(self, data: bytes) -> ParsedFile | Error:
+    def parse(self, file: File) -> ParseResult | ParsingError:
         """Parse the excel data and return a ParsedFile or an Error."""
 
-        soup: BeautifulSoup = BeautifulSoup(data, 'html.parser')
+        soup: BeautifulSoup = BeautifulSoup(file.data, 'html.parser')
 
-        
 
         parsed_file = ParsedFile()
 
         parsed_file.title = self._parse_main_title(soup)
         parsed_file.sections = self._parse_sections(soup)
+        
+        writable_file: WritableFile | None
+        model: Model | None = None
+        writer: Writer | None = None
+        template: str | None = None
 
-        return parsed_file
+        
+        if True: # Placeholder condition for selecting model. TODO: implement actual logic
+            model = PIA_Model()
+            parsed_file = model.process(file.data, file.filename, "output/pia_master.xlsx")
+            template = "templates/PIA_Modelo de datos_template.xlsx"
+            writable_file = model.create_writable_file(parsed_file)
+            writer = ExcelWriter()
+            
+        else:
+            return ParsingError("Model not implemented.")
+
+        # parsed_file.title = self._parse_main_title(sheet)
+        # parsed_file.sections = self._parse_sections(workbook)
+
+        result = ParseResult(writable_file, model, writer, template)
+
+        return result
+
+        
+        
+        result = ParseResult(parsed_file)
+
+        return result

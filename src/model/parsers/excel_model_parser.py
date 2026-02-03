@@ -3,27 +3,31 @@ from io import BytesIO
 from typing import Any, TypedDict, cast
 import pdfplumber
 from src.errors import Error, ParsingError
-from src.model.model import HeaderLevel, ParsedFile, Section, WritableFile
+from src.model.model import File, HeaderLevel, Model, ParseResult, ParsedFile, Parser, Section, WritableFile, Writer
 import re
 import openpyxl
+from openpyxl import Workbook
+
+from src.model.models.AARR_model import AARR_Model
+from src.model.models.RAT_model import RAT_Model
+from src.model.writers.excel_writer import ExcelWriter
+
+class ExcelModelParser(Parser):
 
 
-class ExcelModelParser:
-
-
-    def _parse_main_title(self, workbook) -> str:
+    def _parse_main_title(self, workbook: Workbook) -> str:
         """Extract the main title from the text."""
 
         return ""
         pass
 
-    def _parse_subsection(self, workbook) -> Section:
+    def _parse_subsection(self, workbook: Workbook) -> Section:
         """Extract the main title from the text."""
 
         return Section()
         pass
 
-    def _parse_sections(self, workbook) -> list[Section]:
+    def _parse_sections(self, workbook: Workbook) -> list[Section]:
         """Extract sections from the textlines."""
 
         sections: list[Section] = []
@@ -38,32 +42,40 @@ class ExcelModelParser:
         return sections
         
 
-    def parse(self, data: bytes) -> WritableFile | Error:
+    def parse(self, file: File) -> ParseResult | ParsingError:
         """Parse the excel data and return a ParsedFile or an Error."""
         
-        workbook = openpyxl.load_workbook(filename=BytesIO(data))
-        sheet = workbook.active
-
-
-        # copy first column third row to the end of row and paste it two rows below.
-        value_list = []
-        range_start = 3
+        workbook = openpyxl.load_workbook(BytesIO(file.data))
+        sheet = workbook.worksheets[0]
 
         if sheet is None:
             return ParsingError("Sheet is None")
+        
+        writable_file: WritableFile | None
+        model: Model | None = None
+        writer: Writer | None = None
+        template: str | None = None
 
-        for row in sheet.iter_rows(min_row=range_start, max_row=sheet.max_row, min_col=1, max_col=1):
-            cell_value = row[0].value
+        if sheet.title == "Evaluacion objetiva":
+            model = AARR_Model()
+            model.process(workbook,  "output/evaluaciones_objetivas_master.xlsx")
+            template = "templates/AARR_Modelo de datos_template.xlsx"
+            writable_file = model.create_writable_file(ParsedFile())
+            writer = ExcelWriter()
+        
+        elif sheet["A1"].value == "Informe RAT":
+            model = RAT_Model()
+            model.process(workbook, "output/RAT_master.xlsx")
+            template = "templates/RAT_Modelo de datos_template.xlsx"
+            writable_file = model.create_writable_file(ParsedFile())
+            writer = ExcelWriter()
             
-            if cell_value is not None:
-                value_list.append(cell_value)
-
-            if row[0].row is not None:
-                sheet.cell(row=row[0].row, column=sheet.max_column + 1, value=cell_value)
-
-        writable_file = WritableFile()
+        else:
+            return ParsingError("Model not implemented.")
 
         # parsed_file.title = self._parse_main_title(sheet)
         # parsed_file.sections = self._parse_sections(workbook)
 
-        return writable_file
+        result = ParseResult(writable_file, model, writer, template)
+
+        return result
