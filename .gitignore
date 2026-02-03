@@ -20,3 +20,5 @@ src/eprivacy.ecix.tech_2_files/*.*
 src/eprivacy.ecix.tech_2_files/*
 src/eprivacy.ecix.tech_files/*.*
 src/eprivacy.ecix.tech_files/*
+
+!templates/*.*
