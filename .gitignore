@@ -9,5 +9,14 @@ wheels/
 # Virtual environments
 .venv
 
+# Extensiones a ignorar
 *.xlsx
 *.pdf
+*.csv
+*.html
+
+# Rutas a ignorar
+src/eprivacy.ecix.tech_2_files/*.*
+src/eprivacy.ecix.tech_2_files/*
+src/eprivacy.ecix.tech_files/*.*
+src/eprivacy.ecix.tech_files/*
