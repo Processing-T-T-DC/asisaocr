@@ -3,11 +3,12 @@
 from src.errors import FileReadError, ParsingError
 from src.model.model import WritableFile
 from src.model.readers.file_model_reader import FileReader
-from src.utils import get_all_file_paths_in_dir
+from src.utils import clean_folder, get_all_file_paths_in_dir
 
 if __name__ == "__main__":
     reader = FileReader()
 
+    clean_folder("output")  # noqa: F821
 
     for file_name in get_all_file_paths_in_dir("input"):
         print(file_name)
