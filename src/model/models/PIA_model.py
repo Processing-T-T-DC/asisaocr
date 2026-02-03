@@ -176,13 +176,13 @@ class PIA_Model(Model):
                     nuevo_idx_detectado = relacion_pregunta_justificacion[curr_col_idx]
                     es_seccion = True
                     # Cambiamos de columna y saltamos el título "Justificación"
-                    print(f"  🔄 Justificación: [{curr_col_idx}] → [{nuevo_idx_detectado}]")
+                    # print(f"  🔄 Justificación: [{curr_col_idx}] → [{nuevo_idx_detectado}]")
                     curr_col_idx = nuevo_idx_detectado
                     continue
                 # Si ya estamos en una columna de justificación (20, 22, 24, 26, 28),
                 # NO cambiamos de columna, solo hacemos continue para saltar el título
                 elif curr_col_idx in [20, 22, 24, 26, 28]:
-                    print(f"  🔄 Justificación adicional en [{curr_col_idx}] (se concatena)")
+                    # # print(f"  🔄 Justificación adicional en [{curr_col_idx}] (se concatena)")
                     continue
             
             # B) ¿Es otra sección del mapeo?
@@ -191,7 +191,7 @@ class PIA_Model(Model):
                     if kw in t_low:
                         nuevo_idx_detectado = idx
                         es_seccion = True
-                        print(f"  🎯 Keyword '{kw[:40]}...' → columna [{idx}]")
+                        # print(f"  🎯 Keyword '{kw[:40]}...' → columna [{idx}]")
                         break
 
             # 3. ¿Es una sección del HTML que NO queremos en el Excel? (EL FRENO)
@@ -200,7 +200,7 @@ class PIA_Model(Model):
             es_titulo_visual = (el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases) # type: ignore
 
             if not es_seccion and es_titulo_visual:
-                print(f"  ⛔ DESCARTE (no mapeado): '{texto_limpio[:60]}...'")
+                # print(f"  ⛔ DESCARTE (no mapeado): '{texto_limpio[:60]}...'")
                 curr_col_idx = -1
                 continue
 
@@ -225,8 +225,8 @@ class PIA_Model(Model):
                     val = prefix + texto_raw
 
                 # DEBUG: Mostrar cuando capturamos SI o NO
-                if texto_limpio.upper() in ['SI', 'NO', 'SÍ']:
-                    print(f"  ✅ Capturando '{texto_limpio}' en [{curr_col_idx}] '{curr_col_name[:50]}...'")
+                # if texto_limpio.upper() in ['SI', 'NO', 'SÍ']:
+                    # print(f"  ✅ Capturando '{texto_limpio}' en [{curr_col_idx}] '{curr_col_name[:50]}...'")
                 
                 # Evitar duplicados y títulos
                 if val.strip().lower() != curr_col_name.lower() and \
