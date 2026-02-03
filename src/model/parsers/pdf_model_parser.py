@@ -2,12 +2,12 @@ from collections.abc import Mapping
 from io import BytesIO
 from typing import Any, TypedDict, cast
 import pdfplumber
-from src.errors import Error
-from src.model.model import HeaderLevel, ParsedFile, Section
+from src.errors import Error, ParsingError
+from src.model.model import HeaderLevel, ParseResult, ParsedFile, Parser, Section
 import re
 
 
-class PDFModelParser:
+class PDFModelParser(Parser):
 
     font_sizes_to_header_type: Mapping[int, HeaderLevel] # H1, H2, H3, H4, p
 
@@ -168,7 +168,7 @@ class PDFModelParser:
         return sections
         
 
-    def parse(self, data: bytes) -> ParsedFile | Error:
+    def parse(self, data: bytes) -> ParseResult | ParsingError:
         """Parse the PDF data and return a ParsedFile or an Error."""
 
         parsed_file = ParsedFile()
@@ -209,4 +209,6 @@ class PDFModelParser:
             # parsed_file.title = text.index()
             parsed_file.sections = self._parse_sections(text_info)
 
-            return parsed_file
+            result = ParseResult(parsed_file)
+
+            return result
