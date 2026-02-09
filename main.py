@@ -1,5 +1,4 @@
 
-
 from src.errors import FileReadError, ParsingError
 from src.model.model import WritableFile
 from src.model.readers.file_model_reader import FileReader
