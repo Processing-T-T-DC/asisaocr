@@ -5,6 +5,7 @@ Base Model for data parsing and representation.
 
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
+from functools import cached_property
 from typing import Literal
 
 from src.errors import Error, ParsingError
@@ -95,7 +96,7 @@ class Model(ABC):
 
     FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]    
     
-    @property
+    @cached_property
     @abstractmethod
     def fields(self) -> list[Field]:
         pass

@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Literal, TypeVar, cast, overload
 
 import openpyxl
@@ -79,7 +80,7 @@ class RAT_Model(Model):
         11: "H4", # 
     }
 
-    @property
+    @cached_property
     def fields(self) -> list[Field]:
         return [
             Field("Tratamiento", "B1", "text", True),

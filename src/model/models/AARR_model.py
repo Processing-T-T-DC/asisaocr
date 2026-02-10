@@ -1,14 +1,13 @@
 
+from functools import cached_property
 from typing import Literal, cast
 
-import openpyxl
-from src.errors import ValidationError
-from src.model.model import Field, File, Model, ParsedFile
 from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.cell import Cell, MergedCell, ReadOnlyCell
+from openpyxl.cell import Cell, ReadOnlyCell
 from openpyxl.utils import column_index_from_string
+from openpyxl.worksheet.worksheet import Worksheet
 
+from src.model.model import Field, Model, ParsedFile
 from src.model.writers.excel_writer import ExcelWriter
 
 type ColumnKey = Literal[
@@ -85,7 +84,7 @@ class AARR_Model(Model):
         9: "H4",
     }
     
-    @property
+    @cached_property
     def fields(self) -> list[Field]:
         return [
             Field("Evaluación objetiva", "B2", "text", True),
