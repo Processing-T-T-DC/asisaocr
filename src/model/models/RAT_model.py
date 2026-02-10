@@ -1,15 +1,15 @@
+from functools import cached_property
 from typing import Literal, TypeVar, cast, overload
-from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.cell import Cell, MergedCell, ReadOnlyCell
-from openpyxl.utils import column_index_from_string
-
-from src.model.model import Model, ParsedFile, WritableFile
-from typing import TYPE_CHECKING
-from src.model.writers.excel_writer import ExcelWriter
 
 import openpyxl
+from openpyxl import Workbook
+from openpyxl.cell import Cell, ReadOnlyCell
+from openpyxl.utils import column_index_from_string
+from openpyxl.worksheet.worksheet import Worksheet
 
+from src.errors import ValidationError
+from src.model.model import Field, File, Model, ParsedFile
+from src.model.writers.excel_writer import ExcelWriter
 
 type ColumnKey = Literal[
     "tratamiento",
@@ -80,68 +80,53 @@ class RAT_Model(Model):
         11: "H4", # 
     }
 
-    # PALOMA
-    column_key_name_mapping = {
-    "tratamiento": "Tratamiento",
-    "data_manager": "Gestor de Datos",
-    "data_protection_officer": "Delegado de Datos",
-    "data_controller": "Responsable del Tratamiento",
-    "processing_purpose": "Finalidad",
+    @cached_property
+    def fields(self) -> list[Field]:
+        return [
+            Field("Tratamiento", "B1", "text", True),
+            Field("Gestor de Datos", "C1", "text", False),
+            Field("Delegado de Datos", "D1", "text", True),
+            Field("Responsable del Tratamiento", "E1", "text", False),
+            Field("Finalidad", "F1", "text", True),
+            Field("¿Incluye datos colectivos?", "G1", "yes_no", True),
+            Field("Detalle", "H1", "text", False),
+            Field("¿Incluye datos identificativos o de contacto?", "I1", "yes_no", True),
+            Field("Detalle", "J1", "text", False),
+            Field("¿Incluye datos sensibles o especialmente protegidos?", "K1", "yes_no", True),
+            Field("Datos especialmente protegidos", "L1", "text", False),
+            Field("Otros Datos Especialmente protegidos", "M1", "text", False),
+            Field("¿Incluye comisión de infracciones penales o administrativas?", "N1", "yes_no", True),
+            Field("Detalle", "O1", "text", False),
+            Field("¿Incluye datos de características personales?", "P1", "yes_no", True),
+            Field("Detalle", "Q1", "text", False),
+            Field("¿Incluye datos de circunstancias sociales?", "R1", "yes_no", True),
+            Field("Detalle", "S1", "text", False),
+            Field("¿Incluye datos académicos y profesionales?", "T1", "yes_no", True),
+            Field("Detalle", "U1", "text", False),
+            Field("¿Incluye datos de detalle del empleo?", "V1", "yes_no", True),
+            Field("Detalle", "W1", "text", False),
+            Field("¿Incluye datos de información comercial?", "X1", "yes_no", True),
+            Field("Detalle", "Y1", "text", False),
+            Field("¿Incluye datos de transacciones de bienes y servicios?", "Z1", "yes_no", True),
+            Field("Detalle", "AA1", "text", False),
+            Field("¿Incluye datos económicos, financieros y de seguros?", "AB1", "yes_no", True),
+            Field("Detalle", "AC1", "text", False),
+            Field("¿Incluye datos de otras categorías de datos?", "AD1", "yes_no", True),
+            Field("Detalle", "AE1", "text", False),
+            Field("Base legitimadora del tratamiento", "AF1", "text", False),
+            Field("Descripción de la base legitmadora del tratamiento", "AG1", "text", False),
+            Field("Encargo del tratamiento", "AH1", "text", False),
+            Field("Destinatario", "AI1", "text", False),
+            Field("Función del Destinatario", "AJ1", "text", False),
+            Field("Conservación y Supresión - Resumen", "AK1", "text", False),
+            Field("Conservación y Supresión - Observaciones", "AL1", "text", False),
+            Field("Transferencias Internacionales - Identificación de la transferencia", "AM1", "text", False),
+            Field("Transferencias Internacionales - Categorías de Datos", "AN1", "text", False),
+            Field("Transferencias Internacionales - Resumen", "AO1", "text", False),
+            Field("Transferencias Internacionales - Garantías", "AP1", "text", False),
+            Field("Sistemas de Información", "AQ1", "text", False),
+        ]
 
-    "includes_collective_data": "¿Incluye datos colectivos?",
-    "collective_data_detail": "Detalle",
-
-    "includes_identification_data": "¿Incluye datos identificativos o de contacto?",
-    "identification_data_detail": "Detalle",
-
-    "includes_sensitive_data": "¿Incluye datos sensibles o especialmente protegidos?",
-    "sensitive_data_categories": "Datos especialmente protegidos",
-    "other_sensitive_data": "Otros Datos Especialmente protegidos",
-
-    "includes_criminal_data": "¿Incluye comisión de infracciones penales o administrativas?",
-    "criminal_data_detail": "Detalle",
-
-    "includes_personal_characteristics": "¿Incluye datos de características personales?",
-    "personal_characteristics_detail": "Detalle",
-
-    "includes_social_circumstances": "¿Incluye datos de circunstancias sociales?",
-    "social_circumstances_detail": "Detalle",
-
-    "includes_academic_professional_data": "¿Incluye datos académicos y profesionales?",
-    "academic_professional_data_detail": "Detalle",
-
-    "includes_employment_details": "¿Incluye datos de detalle del empleo?",
-    "employment_details_detail": "Detalle",
-
-    "includes_commercial_information": "¿Incluye datos de información comercial?",
-    "commercial_information_detail": "Detalle",
-
-    "includes_transactions_data": "¿Incluye datos de transacciones de bienes y servicios?",
-    "transactions_data_detail": "Detalle",
-
-    "includes_economic_financial_data": "¿Incluye datos económicos, financieros y de seguros?",
-    "economic_financial_data_detail": "Detalle",
-
-    "includes_other_data_categories": "¿Incluye datos de otras categorías de datos?",
-    "other_data_categories_detail": "Detalle",
-
-    "legal_basis": "Base legitimadora del tratamiento",
-    "legal_basis_description": "Descripción de la base legitmadora del tratamiento",
-
-    "data_processing_assignment": "Encargo del tratamiento",
-    "recipient": "Destinatario",
-    "recipient_function": "Función del Destinatario",
-
-    "retention_and_deletion_summary": "Conservación y Supresión - Resumen",
-    "retention_and_deletion_observations": "Conservación y Supresión - Observaciones",
-
-    "international_transfer_identification": "Transferencias Internacionales - Identificación de la transferencia",
-    "international_transfer_data_categories": "Transferencias Internacionales - Categorías de Datos",
-    "international_transfer_summary": "Transferencias Internacionales - Resumen",
-    "international_transfer_safeguards": "Transferencias Internacionales - Garantías",
-
-    "information_systems": "Sistemas de Información"
-    }
 
     output_mapping: dict[ColumnKey, str] = {
         "tratamiento": "B",
@@ -294,6 +279,14 @@ class RAT_Model(Model):
     type WritableExcelParameters = ExcelWriter.WritableExcelFile.WritableExcelParameters
     
     T = TypeVar('T')
+
+    def validate_output_for_file(self, file: File) -> bool | ValidationError:
+        
+        # Read file with 
+
+
+
+        return False
 
     
     @overload

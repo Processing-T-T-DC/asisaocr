@@ -1,13 +1,13 @@
 
+from functools import cached_property
 from typing import Literal, cast
 
-import openpyxl
-from src.model.model import Model, ParsedFile
 from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.cell import Cell, MergedCell, ReadOnlyCell
+from openpyxl.cell import Cell, ReadOnlyCell
 from openpyxl.utils import column_index_from_string
+from openpyxl.worksheet.worksheet import Worksheet
 
+from src.model.model import Field, Model, ParsedFile
 from src.model.writers.excel_writer import ExcelWriter
 
 type ColumnKey = Literal[
@@ -83,70 +83,73 @@ class AARR_Model(Model):
         11: "H3",
         9: "H4",
     }
-
-
-    videostreaming_columns: dict[ColumnKey, str] = {
-        "evaluacion_objetiva": "Evaluación objetiva",
-        "descripcion": "Descripción",
-        "ubicacion_actividad": "Ubicación de la actividad en la organización (Categoría, tratamiento y finalidad)",
-        "figuras_implicadas": "Figuras implicadas en la realización de la EIPD",
-        "notificar_a": "Notificar a",
-        "numero_de_sujetos_afectados": "Número de sujetos afectados",
-        "categoria_datos_tratados": "Categoría de datos tratados",
-        "como_recopila_datos": "¿Cómo se recopilan los datos personales?",
-        "origen_de_datos": "Indique los orígenes de datos",
-        "duracion_tratamiento": "Duración del tratamiento",
-        "extension_geografica": "Extensión geográfica",
-        "legitimacion_del_tratamiendo": "Legitimación del tratamiento (Indicación de la base legitimadora)",
-        "datos_personales_perfiles": "¿Se van a tratar datos personales para elaborar perfiles, categorizar/segmentar, hacer ratings/scoring o para la toma de decisiones? <span class=\"green\">LOPDGDD</span>",
-        "tratamiento_de_datos_implica": "¿El tratamiento de los datos implica una toma de decisiones automatizada sin que haya ninguna persona que intervenga en la decisión o valore los resultados?",
-        "recogida_datos_finalidad_monitorizacion": "¿La recogida de los datos tiene como finalidad la monitorización o evaluación sistemática y exhaustiva de aspectos personales? <span class=\"green\">LOPDGDD</span>",
-        "recogida_datos_finalidad_protegidos": "¿La recogida de los datos tiene como finalidad el tratamiento de datos especialmente protegidos? <span class=\"green\">LOPDGDD</span>",
-        "recogida_datos_finalidad_gran_escala": "¿La recogida de los datos tiene como finalidad el tratamiento a gran escala? <span class=\"green\">LOPDGDD</span>",
-        "combina_datos": "Para llevar a cabo este tratamiento, ¿se combinan conjuntos de datos utilizados por otros responsables de tratamiento cuya finalidad diste en exceso de las expectativas del interesado?",
-        "implica_uso_especifico": "¿La finalidad del tratamiento implica el uso específico de datos de personas con discapacidad o cualquier otro colectivo en situación de especial vulnerabilidad? <span class=\"green\">LOPDGDD</span>",
-        "tecnologias_inmaduras": "¿Se prevé el uso de tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado, cuyo alcance no puede ser previsto por el interesado de forma clara o razonable e implique elevado riesgo para el acceso no autorizado?",
-        "detalle_tecnologias_inmaduras": "Detalle de las tecnologías que puedan ser percibidas como inmaduras utilizadas",
-        "involucra_contacto_interesados": "¿El tratamiento involucra contacto con los interesados de manera que, dicho contacto, pueda resultar intrusivo o se prevé el uso de tecnologías que se pueden percibir como especialmente intrusivas en la privacidad?",
-        "enriquece_informacion": "¿Se enriquece la información de los interesados mediante la recogida de nuevas categorías de datos o se usan las existentes con nuevas finalidades que antes no se contemplaban, en particular, si estas finalidades son más intrusivas o inesperadas para los afectados, o incluso pueda llegar a bloquear el disfrute de algún servicio?",
-        "tratamiento_acceso_datos_personales": "¿El tratamiento implica que un elevado número de personas (más allá de las necesarias para llevar a cabo el mismo) tenga acceso a los datos personales tratados?",
-        "datos_relativos_acceso_publico": "¿Se van a tratar datos relativos a la observación de zonas de acceso público?",
-        "datos_personales_no_anonimados": "¿Se utilizan datos de carácter personal no disociados o no anonimizados de forma irreversible con fines estadísticos, históricos o de investigación científica?",
-        "puede_impedir_ejercer_derecho": "¿Puede el tratamiento impedir ejercer un derecho, utilizar un servicio o ejecutar un contrato? <span class=\"green\">LOPDGDD</span>",
-        "cesiones_otras_entidades_privadas": "¿Se realizan cesiones de datos a otras entidades privadas u otras organizaciones, ya sean del mismo grupo o proveedores externos al mismo?",
-        "detalle_cesiones_otras_entidades_privadas": "Detalle de las cesiones realizadas",
-        "transferencias_internacionales": "¿Se realizan transferencias internacionales de datos a países fuera de la Unión Europea y que no cuenten con medidas de protección de datos de carácter personal similares a las establecidas por la Autoridad de Control ?",
-        "detalle_transferencias_internacionales": "Detalle de las transferencias realizadas",
-        "tratamiento_similar_EPID": "¿Es este tratamiento similar a otro para el que haya sido necesario realizar un EIPD?",
-        "justificacion_tratamiento_similar_EPID": "Justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la similitud a otro tratamiento para el que haya sido necesario realizar un EIPD",
-        "tratamiento_conlleva_perdida_informacion": "¿Este tratamiento puede conllevar una pérdida o alteración de la información? <span class=\"green\">LOPDGDD</span>",
-        "justificacion_tratamiento_conlleva_perdida_informacion": "Justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la posibilidad de pérdida o alteración de la información",
-        "utiliza_papel_datos_personales": "¿Se utiliza documentación en papel para tratar datos personales?",
-        "medidas_utiliza_papel_datos_personales": "Indique las medidas aplicadas a la documentación en papel",
-        "justificacion_utiliza_papel_datos_personales": " Justificación por parte del responsable de la actividad de tratamiento de las medidas aplicadas a la documentación en papel",
-        "interviene_proveedor_en_proceso": "¿Interviene algún proveedor en el proceso?",
-        "justificacion_interviene_proveedor_en_proceso": "Justificación de los proveedores que intervienen en el proceso",
-        "sistemas_tratando_datos": "Indique los sistemas en los que se tratarán los datos (Medios electrónicos (físicos o en la nube)/Papel)",
-        "fines_secundarios_tratamiento_datos": "¿Existen fines secundarios/intermedios con el tratamiento de los datos? ",
-        "especificacion_fines_secundarios_tratamiento_datos": "Especificar cuáles son los fines secundarios/intermedios",
-        "frecuencia_recabacion_datos": "¿Con qué frecuencia se recaban los datos?",
-        "recaban_todos_datos_conjunta": "¿Se recaban todos los datos afectados de forma conjunta o en distintos momentos?",
-        "descripcion_ciclo_vida": "Descripción del ciclo de vida",
-        "opciones_tratamiento": "Operaciones de tratamiento",
-        "interfieren_datos_adicionales_de_tratamiento": "¿Se infieren u obtienen datos adicionales a partir del tratamiento de datos original?",
-        "especificacion_interfieren_datos_adicionales_de_tratamiento": "Especificar qué datos adicionales se infieren u obtienen",
-        "contexto_del_tratamiento": "CONTEXTO DEL TRATAMIENTO",
-        "mercado_sector_actividad": "Mercado y sector de actividad",
-        "preven_efectos_colaterales_interesados": "¿Se prevén efectos colaterales o adversos para los interesados?",
-        "especificacion_preven_efectos_colaterales_interesados": "Especificar qué efectos colaterales o adversos se prevén",
-        "es_riesgo_alto": "¿En base a las respuestas realizadas en el cuestionario de evaluación objetiva, debe calificarse la presente actividad de tratamiento como de \"RIESGO ALTO\" para los derechos y libertades de las personas?",
-        "justificacion_riesgo_escaso_PIA": "Ha indicado que la presente actividad presenta riesgo ESCASO o NULO, por lo tanto no existe la obligación de realizar un PIA. Por favor, indique los motivos que justifican esta decisión como resultado del análisis ",
-        "evidencias_relativas_resultado": "Evidencias relativas al resultado del análisis: con riesgo ESCASO o NULO",
-        "justificacion_riesgo_alto_PIA": "Ha indicado que la presente actividad presenta RIESGO ALTO, por lo tanto existe la obligación de realizar un PIA. Por favor, indique los motivos que justifican esta decisión como resultado del análisis ",
-        "evidencias_relativas_riesgo_alto": "Evidencias relativas al resultado del análisis: RIESGO ALTO",
-        "otra_informacion_relevante": "Otra información relevante de procedimientos anteriores",
-        "evidencias_otra_informacion_relevante": "Evidencias de otro tipo de información relevante adicional",
-    }
+    
+    @cached_property
+    def fields(self) -> list[Field]:
+        return [
+            Field("Evaluación objetiva", "B2", "text", True),
+            Field("Descripción", "C2", "text", False),
+            Field("Figuras implicadas en la EIPD?", "D2", "text", False),
+            Field("Notificar a ", "E2", "text", False),
+            Field("Nº sujetos afectados", "F2", "fixed_number_range", True),
+            Field("Categoría de datos tratados", "G2", "text", True),
+            Field("Orígenes de datos", "H2", "text", True),
+            Field("Duración del tratamiento", "I2", "treatment_duration", True),
+            Field("Extensión geográfica", "J2", "geographic_extension", True),
+            Field("Legitimación del tratamiento", "K2", "text", True),
+            Field("¿Se van a tratar datos personales para hacer ratings/scoring o toma de decisiones?", "L2", "yes_no", True),
+            Field("Detalle/Justificación", "M2", "text", False),
+            Field("¿El tratamiento de los datos implica una toma de decisiones automatizada sin que haya ninguna persona que intervenga en la decisión o valore los resultados?", "N2", "yes_no", True),
+            Field("Detalle/Justificación (si existe)", "O2", "text", False),
+            Field("La recogida de los datos tiene como finalidad la monitorización o evaluación sistemática y exhaustiva de aspectos personales?", "P2", "yes_no", False),
+            Field("Detalle/Justificación", "Q2", "text", False),
+            Field("¿La recogida de los datos tiene como finalidad el tratamiento de datos especialmente protegidos?", "R2", "yes_no", True),
+            Field("Detalle/Justificación", "S2", "text", False),
+            Field("¿La recogida de los datos tiene como finalidad el tratamiento a gran escala?", "T2", "yes_no", True),
+            Field("Detalle/Justificación", "U2", "text", False),
+            Field("Para llevar a cabo este tratamiento, ¿se combinan conjuntos de datos utilizados por otros responsables de tratamiento cuya finalidad diste en exceso de las expectativas del interesado?", "V2", "yes_no", True),
+            Field("Detalle/Justificación", "W2", "text", False),
+            Field("¿La finalidad del tratamiento implica el uso específico de datos de personas con discapacidad o cualquier otro colectivo en situación de especial vulnerabilidad?", "X2", "yes_no", True),
+            Field("Detalle/Justificación", "Y2", "text", False),
+            Field("¿Se prevé el uso de tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado, cuyo alcance no puede ser previsto por el interesado de forma clara o razonable e implique elevado riesgo para el acceso no autorizado?", "Z2", "yes_no", True),
+            Field("Detalle/Justificación", "AA2", "text", False),
+            Field("¿El tratamiento involucra contacto con los interesados de manera que, dicho contacto, pueda resultar intrusivo o se prevé el uso de tecnologías que se pueden percibir como especialmente intrusivas en la privacidad?", "AB2", "yes_no", True),
+            Field("Detalle/Justificación", "AC2", "text", False),
+            Field("¿Se enriquece la información de los interesados mediante la recogida de nuevas categorías de datos o se usen las existentes con nuevas finalidades que antes no se contemplaban, en particular, si estas finalidades son más intrusivas o inesperadas para los afectados, o incluso pueda llegar a bloquear el disfrute de algún servicio?", "AD2", "yes_no", True),
+            Field("Detalle/justificación", "AE2", "text", False),
+            Field("¿El tratamiento implica que un elevado número de personas (más allá de las necesarias para llevar a cabo el mismo) tenga acceso a los datos personales tratados?", "AF2", "yes_no", True),
+            Field("Detalle/Justificación", "AG2", "text", False),
+            Field("¿Se van a tratar datos relativos a la observación de zonas de acceso público?", "AH2", "yes_no", True),
+            Field("Detalle/Justificación", "AI2", "text", False),
+            Field("¿Se utilizan datos de carácter personal no disociados o no anonimizados de forma irreversible con fines estadísticos, históricos o de investigación científica?", "AJ2", "yes_no", True),
+            Field("Detalle/Justificación", "AK2", "text", False),
+            Field("¿Puede el tratamiento impedir ejercer un derecho, utilizar un servicio o ejecutar un contrato?", "AL2", "yes_no", True),
+            Field("Detalle/Justificación", "AM2", "text", False),
+            Field("¿Se realizan cesiones de datos a otras entidades privadas u otras organizaciones, ya sean del mismo grupo o proveedores externos al mismo?", "AN2", "yes_no", True),
+            Field("Detalle de las cesiones realizadas", "AO2", "text", False),
+            Field("¿Se realizan transferencias internacionales de datos a países fuera de la Unión Europea y que no cuenten con medidas de protección de datos de carácter personal similares a las establecidas por la Autoridad de Control ?", "AP2", "yes_no", True),
+            Field("Detalle/Justifiación", "AQ2", "text", False),
+            Field("¿Es este tratamiento similar a otro para el que haya sido necesario realizar un EIPD?", "AR2", "yes_no", True),
+            Field("Detalle/Justificacación", "AS2", "text", False),
+            Field("¿Este tratamiento puede conllevar una pérdida o alteración de la información?", "AT2", "yes_no", True),
+            Field("Justificación", "AU2", "text", False),
+            Field("¿Es utilizada documentación en papel para tratar datos personales?", "AV2", "yes_no", True),
+            Field("Detalle/Justificación", "AW2", "text", False),
+            Field("¿Interviene algún proveedor en el proceso?", "AX2", "yes_no", True),
+            Field("Justificación", "AY2", "text", False),
+            Field("Operaciones de tratamiento", "AZ2", "text", False),
+            Field("¿Se infieren u obtienen datos adicionales a partir del tratamiento de datos original?", "BA2", "yes_no", True),
+            Field("Detalle/justificación", "BB2", "text", False),
+            Field("¿Se prevén efectos colaterales o adversos para los interesados?", "BC2", "yes_no", False),
+            Field("Detalle/justificación", "BD2", "text", False),
+            Field("¿En base a las respuestas realizadas en el cuestionario de evaluación objetiva, debe calificarse la presente actividad de tratamiento como de \"RIESGO ALTO\" para los derechos y libertades de las personas?", "BE2", "yes_no", False),
+            Field("Ha indicado que la presente actividad presenta riesgo ESCASO o NULO, por lo tanto no existe la obligación de realizar un PIA. Por favor, indique los motivos que justifican esta decisión como resultado del análisis ", "BF2", "text", False),
+            Field("Evidencias relativas al resultado del análisis: con riesgo ESCASO o NULO", "BG2", "text", False),
+            Field("Ha indicado que la presente actividad presenta RIESGO ALTO, por lo tanto existe la obligación de realizar un PIA. Por favor, indique los motivos que justifican esta decisión como resultado del análisis ", "BH2", "text", False),
+            Field("Evidencias relativas al resultado del análisis: RIESGO ALTO", "BI2", "text", False),
+            Field("Otra información relevante de procedimientos anteriores", "BJ2", "text", False),
+            Field("Evidencias de otro tipo de información relevante adicional", "BK2", "text", False)
+        ]
 
     output_mapping: dict[ColumnKey, str] = {
         "evaluacion_objetiva": "B",
@@ -392,8 +395,4 @@ class AARR_Model(Model):
         file = ExcelWriter.WritableExcelFile(self.target, entries)
         
         return file
-
-
-
-
 
