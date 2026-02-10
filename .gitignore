@@ -23,4 +23,6 @@ src/eprivacy.ecix.tech_files/*
 src/eprivacy.ecix.tech_3_files/*.*
 src/eprivacy.ecix.tech_3_files/*
 
+input
+output
 !templates/*.*
