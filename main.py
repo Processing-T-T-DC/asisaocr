@@ -1,13 +1,17 @@
 
-from src.errors import FileReadError, ParsingError
+
+from src.errors import Error, FileReadError, ParsingError
 from src.model.model import WritableFile
 from src.model.readers.file_model_reader import FileReader
+from src.model.validators.validator import Validator
 from src.utils import clean_folder, get_all_file_paths_in_dir
 
 if __name__ == "__main__":
     reader = FileReader()
 
-    clean_folder("output")  # noqa: F821
+    if isinstance(clean_folder("output"), Error):
+        print("Error cleaning output folder. Check if the folder exists and is not being used by another process.")
+        exit(1)
 
     for file_name in get_all_file_paths_in_dir("input"):
         print(file_name)
@@ -33,5 +37,9 @@ if __name__ == "__main__":
             
             parse_result.writer.set_target(parse_result.file.target)
             parse_result.writer.write(parse_result.file, parse_result.template)
+    
+    validator = Validator()
+    validator.validate_output()
+    
             
 
