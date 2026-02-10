@@ -5,6 +5,7 @@ from src.model.model import File, Parser
 from src.model.parsers.excel_model_parser import ExcelModelParser
 from src.model.parsers.html_model_parser import HTMLModelParser
 from src.model.parsers.pdf_model_parser import PDFModelParser
+from src.utils import get_file_type_from_file_path
 
 
 class FileReader:
@@ -22,17 +23,19 @@ class FileReader:
         try:
 
             file = Path(self.target)
-            extension = file.suffix.lower()
             parser: Parser
 
-            if extension in {".xls", ".xlsx", ".xlsm", ".xlsb"}:
-                if file.name.startswith("~$"):
-                    return FileReadError(message="WARNING: This is an excel lock file. Skipping.")
-                
+            file_type = get_file_type_from_file_path(file.name)
+
+            if file_type == "ExcelFile":
                 parser = ExcelModelParser()
-            elif extension == ".pdf":
+                
+            elif file_type == "ExcelLockFile":
+                return FileReadError(message="WARNING: This is an excel lock file. Skipping.")
+                
+            elif file_type == "PDFFile":
                 parser = PDFModelParser({})
-            elif extension in {".html", ".htm"}:
+            elif file_type == "HTMLFile":
                 parser = HTMLModelParser()
             else:
                 return FileReadError(message="Type of file not known.")

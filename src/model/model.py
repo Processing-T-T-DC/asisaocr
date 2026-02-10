@@ -3,12 +3,11 @@ Base Model for data parsing and representation.
 """
 
 
-from collections.abc import Mapping
-from typing import Generic, Literal, TypeVar
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
+from typing import Literal
 
 from src.errors import Error, ParsingError
-
 
 type HeaderLevel = Literal["title", "H1", "H2", "H3", "H4", "p"]
 
@@ -68,15 +67,43 @@ class ParsedFile:
 
     raw: str
 
+class File:
+    data: bytes
+    filename: str
+
+    def __init__(self, data: bytes, filename: str):
+        self.data = data
+        self.filename = filename
+
+type FieldType = Literal['text', 'yes_no', 'fixed_number_range', 'treatment_duration', 'geographic_extension']
+class Field:
+    name: str
+    coords: str
+    data_type: FieldType
+    
+    is_required: bool
+
+    def __init__(self, name: str, coords: str, data_type: FieldType, is_required: bool):
+        self.name = name
+        self.coords = coords
+        self.data_type = data_type
+        self.is_required = is_required
 class Model(ABC):
     """ Abstract base class for models """
  
     raw: str
 
-    FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]
+    FONT_SIZES_MAPPING: Mapping[int, HeaderLevel]    
+    
+    @property
+    @abstractmethod
+    def fields(self) -> list[Field]:
+        pass
 
     @abstractmethod
     def create_writable_file(self, parsed_file: ParsedFile) -> WritableFile:
+        """ Create a writable file from the parsed file. """
+
         pass
 
 
@@ -107,14 +134,6 @@ class ParseResult:
         self.model = model
         self.writer = writer
         self.template = template
-
-class File:
-    data: bytes
-    filename: str
-
-    def __init__(self, data: bytes, filename: str):
-        self.data = data
-        self.filename = filename
 
 class Parser(ABC):
     
