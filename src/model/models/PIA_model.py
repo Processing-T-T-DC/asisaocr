@@ -1,9 +1,10 @@
-import os
 import re
+from functools import cached_property
 from typing import cast
 
 from bs4 import BeautifulSoup
-from src.model.model import Model, ParsedFile, Section
+
+from src.model.model import Field, Model, ParsedFile, Section
 from src.model.writers.excel_writer import ExcelWriter
 
 
@@ -17,49 +18,73 @@ class PIA_Model(Model):
         9: "H4",
     }
 
-    COLUMNAS_ORDENADAS = [
-        "Nombre del Archivo", # Agregamos esta para saber de qué HTML viene la fila
-        "Introducción", "Título - Nombre y tratamiento", "Identificación y descripción de la finalidad",
-        "1. Contexto - descripción del proyecto y análisis de la necesidad",
-        "1.1.1.Descripción del proyecto, sistema o producto sobre el que realizar una evaluación de impacto",
-        "Descripción de la finalidad y objetivos a alcanzar al realizar un PIA",
-        "1.1.2. Análisis de la necesidad del PIA - Situaciones que aconsejan realizar una mnueva evaluación de impacto o actualizar la ya realizada para este tratamiento de datos",
-        "¿Se encuentra la presente actividad de tratamiento en los supuestos indicados como de \"Riesgo alto\" para los derechos y libertades de las personas o existen otros motivos que justifiquen elaborar un PIA",
-        "Detalle situación que aconseja realizar una nueva evaluación de impacto o actualizar la ya existente",
-        "Términos y alcance de la Evaluación de Impacto para la Privacidad",
-        "2.1. Preparar y realizar el PIA",
-        "2.1.1.Flujos de información e implicaciones de uso. ¿Cómo se recopilan los datos?",
-        "Orígenes de datos", "¿Cómo se tratan los datos? ", "Sistemas en los que tratarán los datos",
-        "¿Existe una política de conservación y eliminación de datos?",
-        "Procedimiento de notificación a las autoridades pertinentes",
-        "Identificación de las implicaciones del uso de información por parte de los usuarios",
-        "2.1.2. Idoneidad, necesidad y proporcionalidad de la finalidad - ¿El tratamiento permite y logra alcanzar la finalidad perseguida?",
-        "Justificación_1", "Los datos recogidos se van a usar exclusivamente para la finalidad declarada y no para ninguna otra no informada ni incompatible con la legitimidad de su uso (principio de limitación de la finalidad)",
-        "Justificación_2", "La finalidad que se pretende cubrir requiere de todos los datos a recabar y para todas las personas/interesados afectados (principio de minimización de datos)",
-        "Justificación_3", "Las tecnologías empleadas son adecuadas para la finalidad establecida desde el punto de vista del cumplimiento de los principios fundamentales de la privacidad",
-        "Justificación_4", "Los datos no se mantienen más tiempo del necesario para las finalidades del tratamiento (principio de limitación del plazo de conservación)",
-        "Justificación_5", "Conclusión",
-        "2.1.3. Requerimientos de Privacidad - Indique las legislaciones y regulaciones que afectan a la evaluación",
-        "Indicar conjuntos de control de seguridad de la información",
-        "Indicar requisitos de privacidad asociados a la evaluación son los siguientes",
-        "Indique controles ya planeados o existentes que se espera cumplan con los requisitos de privacidad identificados en la evaluación, son los siguientes",
-        "2.1.4. Equipo y criterios - Responsable EIPD", "Responsable de firma del informe PIA",
-        "Otros intervinientes en el proceso de revisión del PIA", "Criterios usados para estimar la valoración de la probabilidad",
-        "Criterios usados para estimar la valoración del impacto",
-        "2.1.5 Plan y Recursos - Describa el plan de proyecto, o el procedimiento que realiza la organización para realizar un PIA",
-        "Los recursos asignados al PIA",
-        "2.1.6 Consulta a los interesados - Partes interesadas identificadas",
-        "El plan de consulta establecido para la comunicación con las partes interesadas",
-        "2.1.7 Comprensión de la evaluación - Descripción detallada del programa, proceso o sistema a evaluar",
-        "3. Identificación de riesgos", "3.1. Operaciones relacionadas con los fines de tratamiento",
-        "3.2. Tipos de datos utilizados", "3.3. Extensión y alcance del tratamiento",
-        "3.4. Categorías de interesados", "3.5. Factores técnicos del tratamiento",
-        "3.6. Recogida y generación de datos", "3.7. Efectos colaterales del tratamiento",
-        "3.8. Categoría del responsable", "3.9. Comunicaciones de datos", "3.10. Seguridad de los tratamientos"
-    ]
+    @cached_property
+    def COLUMNAS_ORDENADAS(self) -> list[str]:
+        return [field.name for field in self.fields]
+
 
     target: str | None
     parsed_file: ParsedFile | None
+
+    @cached_property
+    def fields(self) -> list[Field]:
+        return [
+            Field("Nombre del Archivo", "A1", "text", True),
+            Field("Introducción", "B1", "text", True),
+            Field("Título - Nombre y tratamiento", "C1", "text", True),
+            Field("Identificación y descripción de la finalidad", "D1", "text", True),
+            Field("1. Contexto - descripción del proyecto y análisis de la necesidad", "E1", "text", True),
+            Field("1.1.1.Descripción del proyecto, sistema o producto sobre el que realizar una evaluación de impacto", "F1", "text", False),
+            Field("Descripción de la finalidad y objetivos a alcanzar al realizar un PIA", "G1", "text", False),
+            Field("1.1.2. Análisis de la necesidad del PIA - Situaciones que aconsejan realizar una nueva evaluación de impacto o actualizar la ya realizada para este tratamiento de datos", "H1", "text", False),
+            Field("¿Se encuentra la presente actividad de tratamiento en los supuestos indicados como de \"Riesgo alto\" para los derechos y libertades de las personas o existen otros motivos que justifiquen elaborar un PIA", "I1", "yes_no", False),
+            Field("Detalle situación que aconseja realizar una nueva evaluación de impacto o actualizar la ya existente", "J1", "text", False),
+            Field("Términos y alcance de la Evaluación de Impacto para la Privacidad", "K1", "text", False),
+            Field("2.1. Preparar y realizar el PIA", "L1", "text", False),
+            Field("2.1.1.Flujos de información e implicaciones de uso. ¿Cómo se recopilan los datos?", "M1", "text", False),
+            Field("Orígenes de datos", "N1", "text", False),
+            Field("¿Cómo se tratan los datos? ", "O1", "text", False),
+            Field("Sistemas en los que tratarán los datos", "P1", "text", False),
+            Field("¿Existe una política de conservación y eliminación de datos?", "Q1", "yes_no", False),
+            Field("Procedimiento de notificación a las autoridades pertinentes", "R1", "text", False),
+            Field("Identificación de las implicaciones del uso de información por parte de los usuarios", "S1", "text", False),
+            Field("2.1.2. Idoneidad, necesidad y proporcionalidad de la finalidad - ¿El tratamiento permite y logra alcanzar la finalidad perseguida?", "T1", "yes_no", False),
+            Field("Justificación_1", "U1", "text", False),
+            Field("Los datos recogidos se van a usar exclusivamente para la finalidad declarada y no para ninguna otra no informada ni incompatible con la legitimidad de su uso (principio de limitación de la finalidad)", "V1", "yes_no", False),
+            Field("Justificación_2", "W1", "text", False),
+            Field("La finalidad que se pretende cubrir requiere de todos los datos a recabar y para todas las personas/interesados afectados (principio de minimización de datos)", "X1", "yes_no", False),
+            Field("Justificación_3", "Y1", "text", False),
+            Field("Las tecnologías empleadas son adecuadas para la finalidad establecida desde el punto de vista del cumplimiento de los principios fundamentales de la privacidad", "Z1", "yes_no", False),
+            Field("Justificación_4", "AA1", "text", False),
+            Field("Los datos no se mantienen más tiempo del necesario para las finalidades del tratamiento (principio de limitación del plazo de conservación)", "AB1", "yes_no", False),
+            Field("Justificación_5", "AC1", "text", False),
+            Field("Conclusión", "AD1", "text", False),
+            Field("2.1.3. Requerimientos de Privacidad - Indique las legislaciones y regulaciones que afectan a la evaluación", "AE1", "text", False),
+            Field("Indicar conjuntos de control de seguridad de la información", "AF1", "text", False),
+            Field("Indicar requisitos de privacidad asociados a la evaluación son los siguientes", "AG1", "text", False),
+            Field("Indique controles ya planeados o existentes que se espera cumplan con los requisitos de privacidad identificados en la evaluación, son los siguientes", "AH1", "text", False),
+            Field("2.1.4. Equipo y criterios - Responsable EIPD", "AI1", "text", False),
+            Field("Responsable de firma del informe PIA", "AJ1", "text", False),
+            Field("Otros intervinientes en el proceso de revisión del PIA", "AK1", "text", False),
+            Field("Criterios usados para estimar la valoración de la probabilidad", "AL1", "text", False),
+            Field("Criterios usados para estimar la valoración del impacto", "AM1", "text", False),
+            Field("2.1.5 Plan y Recursos - Describa el plan de proyecto, o el procedimiento que realiza la organización para realizar un PIA", "AN1", "text", False),
+            Field("Los recursos asignados al PIA", "AO1", "text", False),
+            Field("2.1.6 Consulta a los interesados - Partes interesadas identificadas", "AP1", "text", False),
+            Field("El plan de consulta establecido para la comunicación con las partes interesadas", "AQ1", "text", False),
+            Field("2.1.7 Comprensión de la evaluación - Descripción detallada del programa, proceso o sistema a evaluar", "AR1", "text", False),
+            Field("3. Identificación de riesgos", "AS1", "text", False),
+            Field("3.1. Operaciones relacionadas con los fines de tratamiento", "AT1", "text", False),
+            Field("3.2. Tipos de datos utilizados", "AU1", "text", False),
+            Field("3.3. Extensión y alcance del tratamiento", "AV1", "text", False),
+            Field("3.4. Categorías de interesados", "AW1", "text", False),
+            Field("3.5. Factores técnicos del tratamiento", "AX1", "text", False),
+            Field("3.6. Recogida y generación de datos", "AY1", "text", False),
+            Field("3.7. Efectos colaterales del tratamiento", "AZ1", "text", False),
+            Field("3.8. Categoría del responsable", "BA1", "text", False),
+            Field("3.9. Comunicaciones de datos", "BB1", "text", False),
+            Field("3.10. Seguridad de los tratamientos", "BC1", "text", False)
+        ]
 
     def process(self, html_content: bytes, nombre_archivo: str, target: str) -> ParsedFile:
         """
