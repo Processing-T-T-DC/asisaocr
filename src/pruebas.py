@@ -6,7 +6,7 @@ import sys
 import pandas as pd
 from bs4 import BeautifulSoup
 
-sys.stdout.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")# type: ignore
 
 # --- CONSTANTES DE COLUMNAS (Globales para usarlas en ambas funciones) ---
 COLUMNAS_ORDENADAS_PIA = [
@@ -52,6 +52,7 @@ COLUMNAS_ORDENADAS_PIA = [
 
 COLUMNAS_ORDENADAS_AARR = [
     "Nombre del Archivo", # Identificador de origen
+    "Tratamiento / Finalidad",
     "Evaluación objetiva",
     "Descripción",
     "¿Figuras implicadas en la EIPD?",
@@ -102,6 +103,12 @@ COLUMNAS_ORDENADAS_AARR = [
     "Detalle/Justificación (Papel)",
     "¿Interviene algún proveedor en el proceso?",
     "Justificación (Proveedores)",
+    "Indique los sistemas en los que se tratarán los datos (Medios electrónicos (físicos o en la nube)/Papel)",
+    "¿Existen fines secundarios/intermedios con el tratamiento de los datos?",
+    "Especificar cuáles son los fines secundarios/intermedios",
+    "¿Con qué frecuencia se recaban los datos?",
+    "¿Se recaban todos los datos afectados de forma conjunta o en distintos momentos?",
+    "Descripción del ciclo de vida",
     "Operaciones de tratamiento",
     "¿Se infieren u obtienen datos adicionales a partir del tratamiento de datos original?",
     "Detalle/justificación (Datos inferidos)",
@@ -191,7 +198,7 @@ def procesar_un_html_pia(html_content, nombre_archivo):
     
     # 1. EXTRACCIÓN PROYECTO - TRATAMIENTO
     proy_tag = soup.find(class_="report_proyecto_name")
-    trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))
+    trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))# type: ignore
     if proy_tag or trat_tag:
         p_txt = proy_tag.get_text(strip=True) if proy_tag else ""
         t_txt = trat_tag.next_sibling.strip() if (trat_tag and trat_tag.next_sibling) else ""
@@ -247,8 +254,8 @@ def procesar_un_html_pia(html_content, nombre_archivo):
 
         # 3. ¿Es una sección del HTML que NO queremos en el Excel? (EL FRENO)
         # Si el elemento es una cabecera (H1-H4) o tiene clase 'pregunta', pero no entró en el mapeo anterior
-        clases = el.get('class', [])
-        es_titulo_visual = (el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases)
+        clases = el.get('class', [])# type: ignore
+        es_titulo_visual = (el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases)# type: ignore
 
         if not es_seccion and es_titulo_visual:
             # print(f"  ⛔ DESCARTE (no mapeado): '{texto_limpio[:60]}...'")
@@ -315,92 +322,110 @@ def procesar_un_html_aarr(html_content, nombre_archivo):
     mapeo_indices = {
         # Metadatos
         "nombre del archivo": 0,
+        "inicio_documento": 1,
         
         # Identificación básica
-        "evaluación objetiva": 1,
-        "descripción": 2,
-        "figuras implicadas": 3,
-        "notificar a": 4,
+        "evaluación objetiva": 2,
+        "descripción": 3,
+        "figuras implicadas": 4,
+        "notificar a": 5,
         
         # Alcance y Datos
-        "número de sujetos afectados": 5,
-        "categoría de datos tratados": 6,
-        "orígenes de datos": 7,
-        "duración del tratamiento": 8,
-        "extensión geográfica": 9,
-        "legitimación del tratamiento": 10,
+        "número de sujetos afectados": 6,
+        "categoría de datos tratados": 7,
+        "orígenes de datos": 8,
+        "duración del tratamiento": 9,
+        "extensión geográfica": 10,
+        "legitimación del tratamiento": 11,
 
         # Análisis de Riesgos Específicos (Pregunta + Justificación)
-        "ratings/scoring": 11,
-        "justificación ratings/scoring": 12,
+        "ratings/scoring o para la toma de decisiones": 12,
+        "justificación ratings/scoring": 13,
         
-        "toma de decisiones automatizada": 13,
-        "justificación decisiones automatizadas": 14,
+        "toma de decisiones automatizada": 14,
+        "justificación decisiones automatizadas": 15,
         
-        "monitorización o evaluación sistemática": 15,
-        "justificación monitorización": 16,
+        "finalidad la monitorización o evaluación sistemática y exhaustiva": 16,
+        "justificación monitorización": 17,
         
-        "tratamiento de datos especialmente protegidos": 17,
-        "justificación datos protegidos": 18,
+        "tratamiento de datos especialmente protegidos": 18,
+        "justificación datos protegidos": 19,
         
-        "finalidad el tratamiento a gran escala": 19,
-        "justificación gran escala": 20,
+        "finalidad el tratamiento a gran escala": 20,
+        "justificación gran escala": 21,
         
-        "se combinan conjuntos de datos utilizados": 21,
-        "justificación combinación datos": 22,
+        "se combinan conjuntos de datos utilizados": 22,
+        "justificación combinación datos": 23,
         
-        "colectivo en situación de especial vulnerabilidad": 23,
-        "justificación vulnerabilidad": 24,
+        "colectivo en situación de especial vulnerabilidad": 24,
+        "justificación vulnerabilidad": 25,
         
-        "tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado": 25,
-        "justificación tecnologías inmaduras": 26,
+        "tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado": 26,
+        "detalle de las tecnologías que puedan ser percibidas como inmaduras utilizadas": 27,
         
-        "tecnologías que se pueden percibir como especialmente intrusivas": 27,
-        "justificación contacto intrusivo": 28,
+        "tecnologías que se pueden percibir como especialmente intrusivas": 28,
+        "justificación contacto intrusivo": 29,
         
-        "enriquece la información de los interesados mediante la recogida": 29,
-        "justificación enriquecimiento": 30,
+        "enriquece la información de los interesados mediante la recogida": 30,
+        "justificación enriquecimiento": 31,
         
-        "implica que un elevado número de personas": 31,
-        "justificación acceso elevado": 32,
+        "implica que un elevado número de personas": 32,
+        "justificación acceso elevado": 33,
         
-        "observación de zonas de acceso público": 33,
-        "justificación zonas públicas": 34,
+        "observación de zonas de acceso público": 34,
+        "justificación zonas públicas": 35,
         
-        "fpersonal no disociados o no anonimizados de forma irreversible con fines estadísticos": 35,
-        "justificación fines estadísticos": 36,
+        "personal no disociados o no anonimizados de forma irreversible con fines estadísticos": 36,
+        "justificación fines estadísticos": 37,
         
-        "ejercer un derecho, utilizar un servicio o ejecutar un contrato": 37,
-        "justificación impedir derechos": 38,
+        "ejercer un derecho, utilizar un servicio o ejecutar un contrato": 38,
+        "justificación impedir derechos": 39,
 
         # Relaciones Externas y Otros
-        "realizan cesiones de datos a otras entidades ": 39,
-        "detalle de las cesiones": 40,
+        "realizan cesiones de datos a otras entidades ": 40,
+        "detalle de las cesiones realizadas": 41,
         
-        "transferencias internacionales de datos a países fuera": 41,
-        "detalle transferencias internacionales": 42,
+        "transferencias internacionales de datos a países fuera": 42,
+        "detalle de las transferencias realizadas": 43,
         
-        "similar a otro para el que haya sido necesario realizar un eipd": 43,
-        "detalle similitud eipd": 44,
+        "similar a otro para el que haya sido necesario realizar un eipd": 44,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la similitud a otro tratamiento para el que haya sido necesario realizar un eipd": 45,
         
-        "conllevar una pérdida o alteración de la información": 45,
-        "justificación pérdida/alteración": 46,
+        "conllevar una pérdida o alteración de la información": 46,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la posibilidad de pérdida o alteración de la información": 47,
         
-        "utilizada documentación en papel para tratar datos personales": 47,
-        "justificación papel": 48,
+        "utilizada documentación en papel para tratar datos personales": 48,
+        "justificación por parte del responsable de la actividad de tratamiento de las medidas aplicadas a la documentación en papel": 49,
         
-        "interviene algún proveedor en el proceso": 49,
-        "justificación proveedores": 50,
+        "interviene algún proveedor en el proceso": 50,
+        "justificación de los proveedores que intervienen en el proceso": 51,
+
+        # Tratamiento de los datos
+        "indique los sistemas en los que se tratarán los datos": 52,
+        "existen fines secundarios/intermedios con el tratamiento de los datos": 53,
+        "especificar cuáles son los fines secundarios/intermedios": 54,
+        "con qué frecuencia se recaban los datos": 55,
+        "se recaban todos los datos afectados de forma conjunta o en distintos momentos": 56,
+        "descripción del ciclo de vida": 57,
 
         # Operaciones y Conclusión
-        "operaciones de tratamiento": 51,
-        "datos adicionales/inferidos": 52,
-        "justificación datos inferidos": 53,
+        "operaciones de tratamiento": 58,
+
+        "infieren u obtienen datos adicionales a partir del tratamiento": 59,
+        "justificación datos inferidos": 60,
         
-        "efectos colaterales/adversos": 54,
-        "justificación efectos adversos": 55,
+        "prevén efectos colaterales o adversos para los interesados": 61,
+        "justificación efectos adversos": 62,
         
-        "resultado del análisis": 56
+        # Resultado del análisis
+        # "resultado del análisis": 56
+        "en base a las respuestas realizadas en el cuestionario de evaluación objetiva, debe calificarse la presente actividad de tratamiento como": 63,
+        "ha indicado que la presente actividad presenta riesgo escaso o nulo": 64,
+        "evidencias relativas al resultado del análisis: con riesgo escaso o nulo": 65,
+        "ha indicado que la presente actividad presenta riesgo alto": 66,
+        "evidencias relativas al resultado del análisis: riesgo alto": 67,
+        "otra información relevante de procedimientos anteriores": 68,
+        "evidencias de otro tipo de información relevante adicional": 69
     }
 
     # Diccionario resultado inicializado con vacíos
@@ -409,7 +434,7 @@ def procesar_un_html_aarr(html_content, nombre_archivo):
     
     # 1. EXTRACCIÓN PROYECTO - TRATAMIENTO
     proy_tag = soup.find(class_="report_proyecto_name")
-    trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))
+    trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))# type: ignore
     if proy_tag or trat_tag:
         p_txt = proy_tag.get_text(strip=True) if proy_tag else ""
         t_txt = trat_tag.next_sibling.strip() if (trat_tag and trat_tag.next_sibling) else ""
@@ -465,8 +490,8 @@ def procesar_un_html_aarr(html_content, nombre_archivo):
 
         # 3. ¿Es una sección del HTML que NO queremos en el Excel? (EL FRENO)
         # Si el elemento es una cabecera (H1-H4) o tiene clase 'pregunta', pero no entró en el mapeo anterior
-        clases = el.get('class', [])
-        es_titulo_visual = (el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases)
+        clases = el.get('class', [])# type: ignore
+        es_titulo_visual = (el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases)# type: ignore
 
         if not es_seccion and es_titulo_visual:
             # print(f"  ⛔ DESCARTE (no mapeado): '{texto_limpio[:60]}...'")
@@ -507,6 +532,359 @@ def procesar_un_html_aarr(html_content, nombre_archivo):
         # Renombrar Justificaciones para el CSV final
         fila_final[col] = "\n".join(resultado[col]).strip()
         
+    return fila_final
+
+def procesar_un_html_estructurado(html_content, nombre_archivo):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Mapeo de variables (Indices basados en la lista global)
+    vars_cols = {i: nombre for i, nombre in enumerate(COLUMNAS_ORDENADAS_AARR)}
+    
+    # Tu lógica de relación (Pregunta -> Su Justificación)
+    relacion_pregunta_justificacion = {
+        19: 20, 21: 22, 23: 24, 25: 26, 27: 28 
+    }
+
+    # El mapeo_indices que ya tienes definido
+    mapeo_indices = {
+        # Metadatos
+        "nombre del archivo": 0,
+        "inicio_documento": 1,
+        
+        # Identificación básica
+        "evaluación objetiva": 2,
+        "descripción": 3,
+        "figuras implicadas": 4,
+        "notificar a": 5,
+        
+        # Alcance y Datos
+        "número de sujetos afectados": 6,
+        "categoría de datos tratados": 7,
+        "orígenes de datos": 8,
+        "duración del tratamiento": 9,
+        "extensión geográfica": 10,
+        "legitimación del tratamiento": 11,
+
+        # Análisis de Riesgos Específicos (Pregunta + Justificación)
+        "ratings/scoring o para la toma de decisiones": 12,
+        "justificación ratings/scoring": 13,
+        
+        "toma de decisiones automatizada": 14,
+        "justificación decisiones automatizadas": 15,
+        
+        "finalidad la monitorización o evaluación sistemática y exhaustiva": 16,
+        "justificación monitorización": 17,
+        
+        "tratamiento de datos especialmente protegidos": 18,
+        "justificación datos protegidos": 19,
+        
+        "finalidad el tratamiento a gran escala": 20,
+        "justificación gran escala": 21,
+        
+        "se combinan conjuntos de datos utilizados": 22,
+        "justificación combinación datos": 23,
+        
+        "colectivo en situación de especial vulnerabilidad": 24,
+        "justificación vulnerabilidad": 25,
+        
+        "tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado": 26,
+        "detalle de las tecnologías que puedan ser percibidas como inmaduras utilizadas": 27,
+        
+        "tecnologías que se pueden percibir como especialmente intrusivas": 28,
+        "justificación contacto intrusivo": 29,
+        
+        "enriquece la información de los interesados mediante la recogida": 30,
+        "justificación enriquecimiento": 31,
+        
+        "implica que un elevado número de personas": 32,
+        "justificación acceso elevado": 33,
+        
+        "observación de zonas de acceso público": 34,
+        "justificación zonas públicas": 35,
+        
+        "personal no disociados o no anonimizados de forma irreversible con fines estadísticos": 36,
+        "justificación fines estadísticos": 37,
+        
+        "ejercer un derecho, utilizar un servicio o ejecutar un contrato": 38,
+        "justificación impedir derechos": 39,
+
+        # Relaciones Externas y Otros
+        "realizan cesiones de datos a otras entidades ": 40,
+        "detalle de las cesiones realizadas": 41,
+        
+        "transferencias internacionales de datos a países fuera": 42,
+        "detalle de las transferencias realizadas": 43,
+        
+        "similar a otro para el que haya sido necesario realizar un eipd": 44,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la similitud a otro tratamiento para el que haya sido necesario realizar un eipd": 45,
+        
+        "conllevar una pérdida o alteración de la información": 46,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la posibilidad de pérdida o alteración de la información": 47,
+        
+        "utilizada documentación en papel para tratar datos personales": 48,
+        "justificación por parte del responsable de la actividad de tratamiento de las medidas aplicadas a la documentación en papel": 49,
+        
+        "interviene algún proveedor en el proceso": 50,
+        "justificación de los proveedores que intervienen en el proceso": 51,
+
+        # Tratamiento de los datos
+        "indique los sistemas en los que se tratarán los datos": 52,
+        "existen fines secundarios/intermedios con el tratamiento de los datos": 53,
+        "especificar cuáles son los fines secundarios/intermedios": 54,
+        "con qué frecuencia se recaban los datos": 55,
+        "se recaban todos los datos afectados de forma conjunta o en distintos momentos": 56,
+        "descripción del ciclo de vida": 57,
+
+        # Operaciones y Conclusión
+        "operaciones de tratamiento": 58,
+
+        "infieren u obtienen datos adicionales a partir del tratamiento": 59,
+        "justificación datos inferidos": 60,
+        
+        "prevén efectos colaterales o adversos para los interesados": 61,
+        "justificación efectos adversos": 62,
+        
+        # Resultado del análisis
+        # "resultado del análisis": 56
+        "en base a las respuestas realizadas en el cuestionario de evaluación objetiva, debe calificarse la presente actividad de tratamiento como": 63,
+        "ha indicado que la presente actividad presenta riesgo escaso o nulo": 64,
+        "evidencias relativas al resultado del análisis: con riesgo escaso o nulo": 65,
+        "ha indicado que la presente actividad presenta riesgo alto": 66,
+        "evidencias relativas al resultado del análisis: riesgo alto": 67,
+        "otra información relevante de procedimientos anteriores": 68,
+        "evidencias de otro tipo de información relevante adicional": 69
+    }
+
+    resultado = {col: [] for col in COLUMNAS_ORDENADAS_AARR}
+    resultado["Nombre del Archivo"] = [nombre_archivo]
+    
+    # 1. EXTRACCIÓN METADATOS (Proyecto / Tratamiento) - Se mantiene igual
+    proy_tag = soup.find(class_="report_proyecto_name")
+    trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))# type: ignore
+    if proy_tag or trat_tag:
+        p_txt = proy_tag.get_text(strip=True) if proy_tag else ""
+        t_txt = trat_tag.next_sibling.strip() if (trat_tag and trat_tag.next_sibling) else ""
+        if 2 in vars_cols:
+            resultado[vars_cols[2]].append(f"{p_txt} - {t_txt}")
+
+    # 2. PROCESAMIENTO POR BLOQUES
+    # Buscamos todos los divs que empiecen por levelQuestionClass_
+    bloques = soup.find_all('div', class_=re.compile(r'levelQuestionClass_[01]'))# type: ignore
+    
+    # Variable para recordar en qué pregunta estamos (el "ancla" para la justificación)
+    ultimo_idx_pregunta = None
+
+    for bloque in bloques:
+        # Extraemos la pregunta y la respuesta dentro del bloque
+        preg_el = bloque.find(class_="pregunta")
+        resp_el = bloque.find(class_="respuesta")
+        
+        if not preg_el or not resp_el:
+            continue
+            
+        texto_pregunta = preg_el.get_text(" ", strip=True).lower()
+        # La respuesta puede ser un P o una tabla, usamos get_text con separador
+        texto_respuesta = resp_el.get_text("\n", strip=True)
+        
+        # --- CASO A: Es una pregunta principal (_0) ---
+        if "levelQuestionClass_0" in bloque.get('class', []):# type: ignore
+            encontrado = False
+            for kw, idx in mapeo_indices.items():
+                if kw.lower() in texto_pregunta:
+                    col_name = vars_cols[idx]
+                    resultado[col_name].append(texto_respuesta)
+                    ultimo_idx_pregunta = idx # Guardamos el índice para la posible justificación
+                    encontrado = True
+                    break
+            
+            if not encontrado:
+                # Opcional: print(f"Pregunta no mapeada: {texto_pregunta[:50]}")
+                ultimo_idx_pregunta = None # Resetear si la pregunta no nos interesa
+
+        # --- CASO B: Es una justificación (_1) ---
+        elif "levelQuestionClass_1" in bloque.get('class', []):# type: ignore
+            # Si sabemos a qué pregunta pertenece esta justificación
+            if ultimo_idx_pregunta in relacion_pregunta_justificacion:
+                idx_just = relacion_pregunta_justificacion[ultimo_idx_pregunta]
+                col_name = vars_cols[idx_just]
+                resultado[col_name].append(texto_respuesta)
+                # print(f"Capturada justificación para la pregunta {ultimo_idx_pregunta}")
+
+    # 3. APLANAR RESULTADO
+    fila_final = {col: "\n".join(resultado[col]).strip() for col in COLUMNAS_ORDENADAS_AARR}
+    return fila_final
+
+def procesar_un_html_bloques(html_content, nombre_archivo):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # 1. Preparar contenedores
+    vars_cols = {i: nombre for i, nombre in enumerate(COLUMNAS_ORDENADAS_AARR)}
+    resultado = {col: [] for col in COLUMNAS_ORDENADAS_AARR}
+    resultado["Nombre del Archivo"] = [nombre_archivo]
+
+    mapeo_indices = {
+        # Metadatos
+        "nombre del archivo": 0,
+        "inicio_documento": 1,
+        
+        # Identificación básica
+        "evaluación objetiva": 2,
+        "descripción": 3,
+        "figuras implicadas": 4,
+        "notificar a": 5,
+        
+        # Alcance y Datos
+        "número de sujetos afectados": 6,
+        "categoría de datos tratados": 7,
+        "orígenes de datos": 8,
+        "duración del tratamiento": 9,
+        "extensión geográfica": 10,
+        "legitimación del tratamiento": 11,
+
+        # Análisis de Riesgos Específicos (Pregunta + Justificación)
+        "ratings/scoring o para la toma de decisiones": 12,
+        "justificación ratings/scoring": 13,
+        
+        "toma de decisiones automatizada": 14,
+        "justificación decisiones automatizadas": 15,
+        
+        "finalidad la monitorización o evaluación sistemática y exhaustiva": 16,
+        "justificación monitorización": 17,
+        
+        "tratamiento de datos especialmente protegidos": 18,
+        "justificación datos protegidos": 19,
+        
+        "finalidad el tratamiento a gran escala": 20,
+        "justificación gran escala": 21,
+        
+        "se combinan conjuntos de datos utilizados": 22,
+        "justificación combinación datos": 23,
+        
+        "colectivo en situación de especial vulnerabilidad": 24,
+        "justificación vulnerabilidad": 25,
+        
+        "tecnologías que se pueden percibir como inmaduras, de reciente creación o salida al mercado": 26,
+        "detalle de las tecnologías que puedan ser percibidas como inmaduras utilizadas": 27,
+        
+        "tecnologías que se pueden percibir como especialmente intrusivas": 28,
+        "justificación contacto intrusivo": 29,
+        
+        "enriquece la información de los interesados mediante la recogida": 30,
+        "justificación enriquecimiento": 31,
+        
+        "implica que un elevado número de personas": 32,
+        "justificación acceso elevado": 33,
+        
+        "observación de zonas de acceso público": 34,
+        "justificación zonas públicas": 35,
+        
+        "personal no disociados o no anonimizados de forma irreversible con fines estadísticos": 36,
+        "justificación fines estadísticos": 37,
+        
+        "ejercer un derecho, utilizar un servicio o ejecutar un contrato": 38,
+        "justificación impedir derechos": 39,
+
+        # Relaciones Externas y Otros
+        "realizan cesiones de datos a otras entidades ": 40,
+        "detalle de las cesiones realizadas": 41,
+        
+        "transferencias internacionales de datos a países fuera": 42,
+        "detalle de las transferencias realizadas": 43,
+        
+        "similar a otro para el que haya sido necesario realizar un eipd": 44,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la similitud a otro tratamiento para el que haya sido necesario realizar un eipd": 45,
+        
+        "conllevar una pérdida o alteración de la información": 46,
+        "justificación de la percepción por parte del responsable de la actividad de tratamiento respecto de la posibilidad de pérdida o alteración de la información": 47,
+        
+        "utilizada documentación en papel para tratar datos personales": 48,
+        "justificación por parte del responsable de la actividad de tratamiento de las medidas aplicadas a la documentación en papel": 49,
+        
+        "interviene algún proveedor en el proceso": 50,
+        "justificación de los proveedores que intervienen en el proceso": 51,
+
+        # Tratamiento de los datos
+        "indique los sistemas en los que se tratarán los datos": 52,
+        "existen fines secundarios/intermedios con el tratamiento de los datos": 53,
+        "especificar cuáles son los fines secundarios/intermedios": 54,
+        "con qué frecuencia se recaban los datos": 55,
+        "se recaban todos los datos afectados de forma conjunta o en distintos momentos": 56,
+        "descripción del ciclo de vida": 57,
+
+        # Operaciones y Conclusión
+        "operaciones de tratamiento": 58,
+
+        "infieren u obtienen datos adicionales a partir del tratamiento": 59,
+        "justificación datos inferidos": 60,
+        
+        "prevén efectos colaterales o adversos para los interesados": 61,
+        "justificación efectos adversos": 62,
+        
+        # Resultado del análisis
+        # "resultado del análisis": 56
+        "en base a las respuestas realizadas en el cuestionario de evaluación objetiva, debe calificarse la presente actividad de tratamiento como": 63,
+        "ha indicado que la presente actividad presenta riesgo escaso o nulo": 64,
+        "evidencias relativas al resultado del análisis: con riesgo escaso o nulo": 65,
+        "ha indicado que la presente actividad presenta riesgo alto": 66,
+        "evidencias relativas al resultado del análisis: riesgo alto": 67,
+        "otra información relevante de procedimientos anteriores": 68,
+        "evidencias de otro tipo de información relevante adicional": 69
+    }
+
+    # --- 1. EXTRACCIÓN PROYECTO / TRATAMIENTO (Cabecera) ---
+    col_titulo = "Tratamiento / Finalidad" 
+    
+    # Prioridad: Buscamos el H1 con la clase específica que indicas
+    h1_titulo = soup.find('h1', class_='type_form_title')
+    
+    if h1_titulo:
+        texto_raw = h1_titulo.get_text(strip=True)
+        # re.sub(r'^\d+\s*', '', ...) quita los dígitos (^\d+) y el espacio (\s*) al inicio
+        titulo_final = re.sub(r'^\d+\s*', '', texto_raw)
+        resultado[col_titulo].append(titulo_final)
+    else:
+        # PLAN B: Si no existe el H1, intentamos el método anterior con limpieza similar
+        proy_tag = soup.find(class_="report_proyecto_name")
+        trat_tag = soup.find('span', string=re.compile(r'Tratamiento:', re.I))
+        if (proy_tag or trat_tag) and col_titulo in resultado:
+            p_txt = proy_tag.get_text(strip=True) if proy_tag else ""
+            t_txt = trat_tag.next_sibling.strip() if (trat_tag and trat_tag.next_sibling) else ""
+            cabecera_sucia = f"{p_txt} - {t_txt}"
+            titulo_final = re.sub(r'^\d+\s*', '', cabecera_sucia)
+            resultado[col_titulo].append(titulo_final)
+
+    # --- PROCESAMIENTO DE PREGUNTAS Y JUSTIFICACIONES ---
+    # Buscamos todos los bloques _0 y _1
+    bloques = soup.find_all('div', class_=re.compile(r'levelQuestionClass_[01]'))
+
+    for bloque in bloques:
+        preg_el = bloque.find(class_="pregunta")
+        resp_el = bloque.find(class_="respuesta")
+        
+        if not preg_el or not resp_el:
+            continue
+            
+        # Limpiamos el texto de la pregunta para buscar en el mapeo
+        t_preg_raw = preg_el.get_text(" ", strip=True)
+        t_preg_low = t_preg_raw.lower()
+        
+        # Extraemos la respuesta (puede ser texto simple o tabla)
+        # Usamos "\n" para preservar saltos de línea en justificaciones largas
+        texto_respuesta = resp_el.get_text("\n", strip=True)
+
+        # Buscamos en el mapeo_indices
+        for kw, idx in mapeo_indices.items():
+            if kw.lower() in t_preg_low:
+                col_nombre = vars_cols[idx]
+                
+                # Guardamos la respuesta tal cual, sin el ruido de la cabecera
+                if texto_respuesta and (not resultado[col_nombre] or resultado[col_nombre][-1] != texto_respuesta):
+                    resultado[col_nombre].append(texto_respuesta)
+                
+                break
+
+    # 3. APLANAR RESULTADO
+    fila_final = {col: "\n".join(resultado[col]).strip() for col in COLUMNAS_ORDENADAS_AARR}
     return fila_final
 
 def procesar_carpeta_htmls_pia(ruta_carpeta, nombre_csv_salida="consolidado_pias.csv"):
@@ -582,7 +960,9 @@ def procesar_carpeta_htmls_aarr(ruta_carpeta, nombre_csv_salida="consolidado_aar
                 contenido = f.read()
             
             # LLAMADA A LA FUNCIÓN DE EXTRACCIÓN (definida arriba)
-            datos_fila = procesar_un_html_aarr(contenido, nombre_fichero)
+            # datos_fila = procesar_un_html_aarr(contenido, nombre_fichero)
+            # datos_fila = procesar_un_html_estructurado(contenido, nombre_fichero)
+            datos_fila = procesar_un_html_bloques(contenido, nombre_fichero)
             todas_las_filas.append(datos_fila)
             print(f"OK: {nombre_fichero}")
             
@@ -638,10 +1018,10 @@ def inspeccion_cruda_html(html_content, nombre_archivo):
         texto_raw = el.get_text(" ", strip=True)
         if not texto_raw: continue
         
-        clases = el.get('class', [])
+        clases = el.get('class', [])# type: ignore
         
         # CRITERIO DE TÍTULO: Es una cabecera H o tiene la clase 'pregunta'
-        if el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases:
+        if el.name in ['h1', 'h2', 'h3', 'h4'] or 'pregunta' in clases:# type: ignore
             guardar_bloque()
             current_titulo = texto_raw
             continue

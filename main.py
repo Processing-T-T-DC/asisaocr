@@ -1,10 +1,12 @@
-
+import sys
 
 from src.errors import Error, FileReadError, ParsingError
 from src.model.model import WritableFile
 from src.model.readers.file_model_reader import FileReader
 from src.model.validators.validator import Validator
 from src.utils import clean_folder, get_all_file_paths_in_dir
+
+sys.stdout.reconfigure(encoding="utf-8")# type: ignore
 
 if __name__ == "__main__":
     reader = FileReader()
@@ -13,7 +15,7 @@ if __name__ == "__main__":
         print("Error cleaning output folder. Check if the folder exists and is not being used by another process.")
         exit(1)
 
-    for file_name in get_all_file_paths_in_dir("input"):
+    for file_name in get_all_file_paths_in_dir("input"): #\\extras
         print(file_name)
         reader.set_target(file_name)
         result = reader.read()

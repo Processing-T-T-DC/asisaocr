@@ -4,6 +4,7 @@ from src.model.model import File, Model, ParseResult, ParsedFile, Parser, Sectio
 from bs4 import BeautifulSoup
 
 from src.model.models.PIA_model import PIA_Model
+from src.model.models.AARR_html_model import AARR_HTML_Model
 from src.model.writers.excel_writer import ExcelWriter
 
 class HTMLModelParser(Parser):
@@ -43,9 +44,14 @@ class HTMLModelParser(Parser):
 
         
         if True: # Placeholder condition for selecting model. TODO: implement actual logic
-            model = PIA_Model()
-            parsed_file = model.process(file.data, file.filename, "output/pia_master.xlsx")
-            template = "templates/PIA_Modelo de datos_template.xlsx"
+            # model = PIA_Model()
+            # parsed_file = model.process(file.data, file.filename, "output/pia_master.xlsx")
+            # template = "templates/PIA_Modelo de datos_template.xlsx"
+            # writable_file = model.create_writable_file(parsed_file)
+            # writer = ExcelWriter()
+            model = AARR_HTML_Model()
+            parsed_file = model.process(file.data, file.filename, "output/evaluaciones_objetivas_master.xlsx")
+            template = "templates/AARR_Modelo de datos_template.xlsx"
             writable_file = model.create_writable_file(parsed_file)
             writer = ExcelWriter()
             

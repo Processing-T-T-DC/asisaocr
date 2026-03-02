@@ -16,7 +16,7 @@ class ExcelWriter(Writer):
 
             def __init__(self, row: int, column: int):
                 self.row = row
-                self.column = column
+                self.column = column + 1
 
         class WritableExcelEntry(WritableEntry):
             content: str
